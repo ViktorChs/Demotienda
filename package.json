@@ -7,10 +7,12 @@
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
     "webp": "node scripts/to-webp.mjs",
+    "css": "tailwindcss -c tailwind.config.cjs -i tailwind.input.css -o assets/css/tailwind.css --minify",
     "img:dev": "wrangler dev --config worker/wrangler.toml",
     "img:deploy": "wrangler deploy --config worker/wrangler.toml"
   },
   "devDependencies": {
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "tailwindcss": "3.4.17"
   }
 }
