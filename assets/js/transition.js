@@ -7,6 +7,7 @@
     var GRID_BG = '#2A1B4D';
 
     function gridBg() {
+        if (window.GH_TRANSITION_BG) return window.GH_TRANSITION_BG;
         var dark = false;
         try { dark = document.documentElement.classList.contains('dark'); } catch (e) {}
         return dark ? '#3D2A6B' : '#F8F8FA';
@@ -95,7 +96,7 @@
         if (busy) return;
         ensureGrid();
 
-        if (reduce || (auto && !window.GH_FORCE_TRANSITION)) {
+        if (reduce || window.GH_TRANSITION_ENABLED === false || (auto && !window.GH_FORCE_TRANSITION)) {
             if (mid) mid();
             if (done) done();
             return;

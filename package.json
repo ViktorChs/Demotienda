@@ -1,0 +1,16 @@
+{
+  "name": "gigahertz-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Utilidades de desarrollo (no se publican al sitio)",
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "webp": "node scripts/to-webp.mjs",
+    "img:dev": "wrangler dev --config worker/wrangler.toml",
+    "img:deploy": "wrangler deploy --config worker/wrangler.toml"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.5"
+  }
+}

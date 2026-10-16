@@ -3,10 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://isnbkqgzncjgttijzlmo.supabase.co">
     <title>Contacto - MANIAWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="theme.js"></script>
-    <link rel="stylesheet" href="dark.css">
+    <script src="assets/js/theme.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/sb.js"></script>
+<script src="assets/js/data.js"></script>
+    <link rel="stylesheet" href="assets/css/dark.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -185,7 +192,7 @@
 
     <!-- Page loader -->
     <div id="pageLoader" class="pl" aria-hidden="true">
-        <img src="logo2.png" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'">
+        <img src="assets/img/logos/logo2.webp" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'" loading="eager" decoding="async">
         <div class="pl-ring"></div>
     </div>
     <script>
@@ -276,7 +283,7 @@
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23-1.48 0-2.93-.39-4.19-1.15l-.3-.17-3.12.82.83-3.04-.2-.32a8.188 8.188 0 0 1-1.26-4.38c.01-4.54 3.7-8.24 8.25-8.24m-3.05 4.5c-.18 0-.47.07-.71.34-.24.27-.93.91-.93 2.21s.95 2.55 1.08 2.72c.13.17 1.85 2.83 4.54 3.91 2.23.89 2.68.72 3.16.67.48-.05 1.55-.63 1.77-1.25.22-.62.22-1.15.15-1.26-.07-.11-.24-.17-.51-.3-.27-.13-1.55-.76-1.79-.85-.24-.09-.42-.13-.59.14-.18.27-.69.85-.84 1.03-.15.17-.31.2-.57.07-.27-.14-1.12-.41-2.14-1.32-.79-.7-1.32-1.56-1.48-1.82-.15-.27-.02-.41.12-.55.12-.12.27-.31.4-.47.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.47-.07-.14-.59-1.43-.82-1.95-.21-.51-.43-.44-.59-.45l-.5-.01z"/></svg>
                             Enviar por WhatsApp
                         </button>
-                        <p class="text-[11px] text-gray-400 text-center mt-3">Demo: el envío real a WhatsApp está deshabilitado.</p>
+                        <p class="text-[11px] text-gray-400 text-center mt-3">Se abrirá WhatsApp para enviar tu mensaje.</p>
                     </form>
 
                     <div class="wa-preview" id="waPreview" aria-live="polite">
@@ -294,7 +301,7 @@
                         </div>
                         <div>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">Ubicación</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">zulia, Venezuela<br>Atención presencial con cita previa</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="address">zulia, Venezuela</span><br>Atención presencial con cita previa</p>
                         </div>
                     </div>
 
@@ -304,7 +311,7 @@
                         </div>
                         <div>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">Teléfono</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">+58 (212) 555-GIGA<br>Lunes a sábado, 9:00 am – 6:00 pm</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="phone">+58 (212) 555-GIGA</span><br><span data-gh="hours">Lunes a sábado, 9:00 am – 6:00 pm</span></p>
                         </div>
                     </div>
 
@@ -314,7 +321,7 @@
                         </div>
                         <div>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">Correo</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">soporte@gigahertzstore.com<br>Respuesta en menos de 24 horas hábiles</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="email">soporte@gigahertzstore.com</span><br>Respuesta en menos de 24 horas hábiles</p>
                         </div>
                     </div>
 
@@ -324,7 +331,7 @@
                         </div>
                         <div>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">WhatsApp</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">+58 (424) 555-GIGA<br>Soporte rápido y cotizaciones</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="whatsapp">+58 (424) 555-GIGA</span><br>Soporte rápido y cotizaciones</p>
                         </div>
                     </div>
                 </section>
@@ -377,9 +384,9 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
                     Contacto
                 </h4>
-                <p class="text-xs text-gray-500 mb-2">zulia, Venezuela</p>
-                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
-                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold">+58 (212) 555-GIGA</span></p>
+                <p class="text-xs text-gray-500 mb-2" data-gh="address">zulia, Venezuela</p>
+                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" data-gh="email" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
+                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold" data-gh="phone">+58 (212) 555-GIGA</span></p>
             </div>
         </div>
         <div class="max-w-7xl mx-auto pt-6 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400">
@@ -419,17 +426,24 @@
                 if (!asunto) return invalid(subjectEl);
                 if (!mensaje) return invalid(messageEl);
 
-                const text =
-                    '*Mensaje desde MANIAWORLD*' + '\n\n' +
-                    '*Nombre:* ' + nombre + '\n' +
-                    '*Asunto:* ' + asunto + '\n' +
-                    '*Mensaje:* ' + mensaje;
+                const store = (window.GigaData && GigaData.store) ? GigaData.store() : {};
+                const DEFAULT_TPL = '*Mensaje desde {storeName}*\n\n*Nombre:* {name}\n*Asunto:* {subject}\n*Mensaje:* {message}';
+                const tpl = (store.contactTemplate && store.contactTemplate.trim()) ? store.contactTemplate : DEFAULT_TPL;
+                const text = window.ghTemplate ? ghTemplate(tpl, {
+                    storeName: store.name || 'MANIAWORLD',
+                    name: nombre,
+                    subject: asunto,
+                    message: mensaje
+                }) : tpl;
 
                 bubble.textContent = text;
                 const now = new Date();
                 timeEl.textContent = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
                 preview.classList.add('is-visible');
                 preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                // Abrir WhatsApp con el mensaje
+                if (window.waLink) window.open(waLink(store.whatsapp || '', text), '_blank');
             });
         })();
     </script>
@@ -446,7 +460,9 @@
             });
         })();
     </script>
-    <script src="categorias.js"></script>
-    <script src="bottomnav.js"></script>
+    <script src="assets/js/categorias.js"></script>
+    <script src="assets/js/bottomnav.js"></script>
+    <!-- Datos dinamicos (Supabase): config/sb/data ya cargados en <head> -->
+    <script src="assets/js/store.js"></script>
 </body>
 </html>

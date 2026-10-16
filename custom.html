@@ -3,10 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://isnbkqgzncjgttijzlmo.supabase.co">
     <title>Armar tu PC - MANIAWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="theme.js"></script>
-    <link rel="stylesheet" href="dark.css">
+    <script src="assets/js/theme.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/sb.js"></script>
+<script src="assets/js/data.js"></script>
+    <link rel="stylesheet" href="assets/css/dark.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -484,7 +491,7 @@
 
     <!-- Page loader -->
     <div id="pageLoader" class="pl" aria-hidden="true">
-        <img src="logo2.png" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'">
+        <img src="assets/img/logos/logo2.webp" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'" loading="eager" decoding="async">
         <div class="pl-ring"></div>
     </div>
     <script>
@@ -547,7 +554,7 @@
             <section class="stage-panel" id="stagePanel" aria-label="Visor de tu PC">
                 <div class="stage-wrap">
                     <div class="stage">
-                        <img class="stage-base" src="Base.webp" alt="" onerror="this.style.display='none'">
+                        <img class="stage-base" src="assets/img/misc/Base.webp" alt="" onerror="this.style.display='none'" loading="lazy" decoding="async">
                         <div class="stage-products" id="stageProducts"></div>
                         <div class="stage-hint" id="stageHint">
                             <svg fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>
@@ -633,9 +640,9 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
                     Contacto
                 </h4>
-                <p class="text-xs text-gray-500 mb-2">zulia, Venezuela</p>
-                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
-                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold">+58 (212) 555-GIGA</span></p>
+                <p class="text-xs text-gray-500 mb-2" data-gh="address">zulia, Venezuela</p>
+                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" data-gh="email" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
+                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold" data-gh="phone">+58 (212) 555-GIGA</span></p>
             </div>
         </div>
         <div class="max-w-7xl mx-auto pt-6 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400">
@@ -686,7 +693,7 @@
         </div>
     </div>
 
-    <script src="cart.js"></script>
+    <script src="assets/js/cart.js"></script>
     <script>
         (function () {
             const btt = document.getElementById('backToTop');
@@ -713,13 +720,34 @@
                 check: '<path d="M20 6 9 17l-5-5"/>'
             };
 
-            var P = {
+            /* Construye P + SLOT_ORDER desde la DB (builder_slots / builder_parts). */
+            function buildFromDB(D) {
+                if (!D || !D.builderSlots || !D.builderSlots.length) return null;
+                var map = {}, order = [];
+                D.builderSlots.forEach(function (slot) {
+                    var parts = (D.builderParts || []).filter(function (p) {
+                        return String(p.slot_id) === String(slot.id);
+                    }).map(function (p) {
+                        return { id: String(p.id), name: p.name, short: p.short || p.name, price: Number(p.price) || 0, img: ghImg(p.image || '', 400) };
+                    });
+                    map[slot.key] = {
+                        name: slot.name,
+                        label: slot.label || slot.name,
+                        icon: ICONS[slot.icon] || ICONS[slot.key] || ICONS.case,
+                        parts: parts
+                    };
+                    order.push(slot.key);
+                });
+                return { P: map, order: order };
+            }
+
+            var DEFAULT_P = {
                 case: {
                     name: 'Gabinete',
                     label: 'Gabinete',
                     icon: ICONS.case,
                     parts: [
-                        { id: 'case-lianli', name: 'Gabinete Lian Li O11 Dynamic EVO dual chamber', short: 'Lian Li O11 EVO', price: 169, img: 'img/p-12.png' }
+                        { id: 'case-lianli', name: 'Gabinete Lian Li O11 Dynamic EVO dual chamber', short: 'Lian Li O11 EVO', price: 169, img: 'assets/img/products/p-12.webp' }
                     ]
                 },
                 cpu: {
@@ -727,8 +755,8 @@
                     label: 'CPU',
                     icon: ICONS.cpu,
                     parts: [
-                        { id: 'cpu-amd', name: 'AMD Ryzen 7 7800X3D 8 núcleos AM5', short: 'Ryzen 7 7800X3D', price: 389, img: 'img/p-2.png' },
-                        { id: 'cpu-intel', name: 'Intel Core i7-14700K 20 núcleos LGA1700', short: 'Core i7-14700K', price: 409, img: 'img/p-7.png' }
+                        { id: 'cpu-amd', name: 'AMD Ryzen 7 7800X3D 8 núcleos AM5', short: 'Ryzen 7 7800X3D', price: 389, img: 'assets/img/products/p-2.webp' },
+                        { id: 'cpu-intel', name: 'Intel Core i7-14700K 20 núcleos LGA1700', short: 'Core i7-14700K', price: 409, img: 'assets/img/products/p-7.webp' }
                     ]
                 },
                 mb: {
@@ -736,7 +764,7 @@
                     label: 'Placa madre',
                     icon: ICONS.mb,
                     parts: [
-                        { id: 'mb-z790', name: 'ASUS ROG Strix Z790-A Gaming WiFi DDR5', short: 'Z790-A Strix', price: 329, img: 'img/p-8.png' }
+                        { id: 'mb-z790', name: 'ASUS ROG Strix Z790-A Gaming WiFi DDR5', short: 'Z790-A Strix', price: 329, img: 'assets/img/products/p-8.webp' }
                     ]
                 },
                 ram: {
@@ -744,7 +772,7 @@
                     label: 'RAM',
                     icon: ICONS.ram,
                     parts: [
-                        { id: 'ram-32', name: 'Corsair Vengeance RGB 32GB DDR5 6000MHz', short: '32GB DDR5 RGB', price: 119, img: 'img/p-9.avif' }
+                        { id: 'ram-32', name: 'Corsair Vengeance RGB 32GB DDR5 6000MHz', short: '32GB DDR5 RGB', price: 119, img: 'assets/img/products/p-9.webp' }
                     ]
                 },
                 gpu: {
@@ -752,7 +780,7 @@
                     label: 'GPU',
                     icon: ICONS.gpu,
                     parts: [
-                        { id: 'gpu-4070', name: 'NVIDIA RTX 4070 Super 12GB GDDR6X', short: 'RTX 4070 Super', price: 799, img: 'img/p-1.png' }
+                        { id: 'gpu-4070', name: 'NVIDIA RTX 4070 Super 12GB GDDR6X', short: 'RTX 4070 Super', price: 799, img: 'assets/img/products/p-1.webp' }
                     ]
                 },
                 psu: {
@@ -760,7 +788,7 @@
                     label: 'Fuente',
                     icon: ICONS.psu,
                     parts: [
-                        { id: 'psu-850', name: 'Corsair RM850x 850W 80 Plus Gold', short: 'RM850x 850W', price: 139, img: 'img/p-11.png' }
+                        { id: 'psu-850', name: 'Corsair RM850x 850W 80 Plus Gold', short: 'RM850x 850W', price: 139, img: 'assets/img/products/p-11.webp' }
                     ]
                 },
                 cooler: {
@@ -768,10 +796,12 @@
                     label: 'Refrigeración',
                     icon: ICONS.cooler,
                     parts: [
-                        { id: 'cooler-aio', name: 'Refrigeración NZXT Kraken 360 RGB AIO', short: 'Kraken 360 RGB', price: 189, img: 'img/p-13.webp' }
+                        { id: 'cooler-aio', name: 'Refrigeración NZXT Kraken 360 RGB AIO', short: 'Kraken 360 RGB', price: 189, img: 'assets/img/products/p-13.webp' }
                     ]
                 }
             };
+
+            var P = DEFAULT_P;
 
             var SLOT_ORDER = ['case', 'cpu', 'mb', 'ram', 'gpu', 'psu', 'cooler'];
 
@@ -805,6 +835,7 @@
             function esc(s) {
                 return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             }
+            function ghImg(v, w) { return (window.GigaSB && GigaSB.resolveImage) ? GigaSB.resolveImage(v, w) : v; }
             function usd(n) { return '$' + n.toFixed(2); }
             function svg(paths, sw) {
                 return '<svg fill="none" stroke="currentColor" stroke-width="' + (sw || 2) + '" viewBox="0 0 24 24">' + paths + '</svg>';
@@ -838,7 +869,7 @@
                 var items = SLOT_ORDER.filter(function (k) { return !!picks[k]; });
                 stageProducts.innerHTML = items.map(function (k) {
                     var pt = picks[k];
-                    return '<img src="' + esc(pt.img) + '" alt="' + esc(pt.short) + '" data-cat="' + k + '" onerror="this.style.display=\'none\'">';
+                    return '<img src="' + esc(pt.img) + '" alt="' + esc(pt.short) + '" data-cat="' + k + '" onerror="this.style.display=\'none\'" loading="lazy" decoding="async">';
                 }).join('');
                 stageHint.classList.toggle('is-hidden', items.length > 0);
             }
@@ -849,7 +880,7 @@
                     var cfg = P[k];
                     var picked = picks[k];
                     var inner = picked
-                        ? '<img src="' + esc(picked.img) + '" alt="" onerror="this.style.display=\'none\'">'
+                        ? '<img src="' + esc(picked.img) + '" alt="" onerror="this.style.display=\'none\'" loading="lazy" decoding="async">'
                         : svg(cfg.icon, 1.7);
                     return '<button type="button" class="opt-circle' + (picked ? ' is-filled' : '') + '" data-slot="' + k + '" aria-haspopup="dialog" title="' + esc(cfg.name) + '">' +
                         '<span class="oc-ring">' + inner + '<span class="oc-badge">' + svg(ICONS.check, 3) + '</span></span>' +
@@ -978,7 +1009,7 @@
                     id: 'custom-' + Date.now(),
                     name: 'PC a medida (3) @ ' + items.map(function (p) { return p.short; }).join(' + '),
                     price: total,
-                    img: (picks.case ? picks.case.img : 'img/p-12.png')
+                    img: (picks.case ? picks.case.img : 'assets/img/products/p-12.webp')
                 });
                 var btn = addCart;
                 btn.innerHTML = '¡Agregado!';
@@ -986,6 +1017,18 @@
             });
 
             render();
+
+            /* Armador desde Supabase (si está configurado). */
+            if (window.GigaData) {
+                window.GigaData.ready.then(function () {
+                    var built = buildFromDB(window.GigaData);
+                    if (!built || !built.order.length) return;
+                    P = built.P;
+                    SLOT_ORDER = built.order;
+                    picks = {};
+                    render();
+                });
+            }
 
             // ---- Fit the stage into the available viewport area ----
             var stageEl = document.querySelector('.stage');
@@ -1008,6 +1051,8 @@
             setTimeout(scheduleFit, 1200);
         })();
     </script>
-    <script src="bottomnav.js"></script>
+    <script src="assets/js/bottomnav.js"></script>
+    <!-- Datos dinamicos (Supabase): config/sb/data ya cargados en <head> -->
+    <script src="assets/js/store.js"></script>
 </body>
 </html>

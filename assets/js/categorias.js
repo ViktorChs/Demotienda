@@ -2,7 +2,7 @@
 (function () {
     'use strict';
 
-    var GROUPS = [
+    var DEFAULT_GROUPS = [
         {
             name: 'Hardware y Componentes',
             icon: '<path d="M4 4h16v16H4z"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>',
@@ -34,6 +34,8 @@
             items: ['Redes', 'Router y Mesh', 'Cargadores', 'UPS / Respaldo Eléctrico', 'Cables y Adaptadores', 'Camaras de Seguridad', 'Maletines y Bolsos', 'Accesorios', 'Gift Cards y Licencias']
         }
     ];
+
+    var GROUPS = DEFAULT_GROUPS;
 
     var TOTAL = GROUPS.reduce(function (n, g) { return n + g.items.length; }, 0);
     var LAYOUTS = [
@@ -303,5 +305,31 @@
         });
     });
 
+    /* Construye las secciones a partir de la DB (categorías + subcategorías). */
+    function groupsFromData(D) {
+        if (!D || !D.categories || !D.categories.length) return null;
+        var DEF_ICON = '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>';
+        return D.categories.filter(function (c) { return !c.hidden; }).map(function (c) {
+            var items = (D.subcategories || []).filter(function (s) {
+                return String(s.category_id) === String(c.id) && !s.hidden;
+            }).map(function (s) { return s.name; });
+            return { name: c.name, icon: (c.icon && c.icon.trim()) ? c.icon : DEF_ICON, items: items };
+        });
+    }
+
     setLayout(layout);
+
+    /* Si hay datos en Supabase, sustituye las secciones por las reales. */
+    if (window.GigaData) {
+        window.GigaData.ready.then(function (D) {
+            var g = groupsFromData(D);
+            if (!g || !g.length) return;
+            GROUPS = g;
+            TOTAL = GROUPS.reduce(function (n, x) { return n + x.items.length; }, 0);
+            var sub = document.querySelector('#catModal .cm-sub');
+            if (sub) sub.textContent = GROUPS.length + ' secciones · ' + TOTAL + ' categorías';
+            secActive = null;
+            RENDER[layout](body);
+        });
+    }
 })();

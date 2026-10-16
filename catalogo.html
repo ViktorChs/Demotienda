@@ -4,11 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://isnbkqgzncjgttijzlmo.supabase.co">
     <title>Catálogo - MANIAWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="theme.js"></script>
-    <link rel="stylesheet" href="dark.css">
-    <link rel="stylesheet" href="glow-cards.css">
+    <script src="assets/js/theme.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/sb.js"></script>
+<script src="assets/js/data.js"></script>
+    <link rel="stylesheet" href="assets/css/dark.css">
+    <link rel="stylesheet" href="assets/css/glow-cards.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -62,7 +69,7 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(168, 85, 247, 0.4), transparent 70%);
+            background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 40%, transparent), transparent 70%);
             opacity: 0;
             transition: opacity 0.2s ease;
             pointer-events: none;
@@ -72,9 +79,9 @@
             opacity: 1;
         }
         .category-card:hover {
-            border-color: rgba(168, 85, 247, 0.6);
+            border-color: color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 60%, transparent);
             transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(168, 85, 247, 0.22);
+            box-shadow: 0 15px 35px color-mix(in srgb, var(--gh-fx-glow, var(--gh-fx-hover, #7c3aed)) 22%, transparent);
         }
         .product-card {
             position: relative;
@@ -85,9 +92,9 @@
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .product-card:hover {
-            border-color: rgba(168, 85, 247, 0.6);
+            border-color: color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 60%, transparent);
             transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(168, 85, 247, 0.18);
+            box-shadow: 0 15px 35px color-mix(in srgb, var(--gh-fx-glow, var(--gh-fx-hover, #7c3aed)) 18%, transparent);
         }
         .product-name {
             display: -webkit-box;
@@ -129,120 +136,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         select option { background-color: #ffffff; color: #1f2937; padding: 8px; }
-
-        /* ===== Nav Products Dropdown ===== */
-        .nav-dd {
-            position: absolute;
-            top: calc(100% + 10px);
-            left: 50%;
-            width: min(780px, calc(100vw - 32px));
-            transform: translateX(-50%) translateY(-6px) scale(0.985);
-            transform-origin: top center;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            z-index: 40;
-            transition: opacity 160ms var(--pm-ease-out), transform 180ms var(--pm-ease-out), visibility 0s linear 180ms;
-        }
-        .nav-dd.is-open {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-            transform: translateX(-50%) translateY(0) scale(1);
-            transition: opacity 180ms var(--pm-ease-out), transform 200ms var(--pm-ease-out), visibility 0s linear 0s;
-        }
-        .nav-dd-panel {
-            display: grid;
-            grid-template-columns: 232px minmax(0, 1fr);
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(229, 231, 235, 0.9);
-            border-radius: 1.25rem;
-            box-shadow: 0 26px 60px rgba(17, 24, 39, 0.2);
-            overflow: hidden;
-        }
-        .nav-dd-cats {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            padding: 10px;
-            background: #faf9ff;
-            border-right: 1px solid #f3f4f6;
-        }
-        .nav-dd-cat {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            width: 100%;
-            border: 0;
-            background: none;
-            padding: 11px 12px;
-            border-radius: 0.75rem;
-            font-size: 13px;
-            font-weight: 600;
-            color: #374151;
-            text-align: left;
-            cursor: pointer;
-            transition: background-color 140ms ease, color 140ms ease, transform 140ms var(--pm-ease-out);
-        }
-        .nav-dd-cat svg { width: 14px; height: 14px; opacity: 0.55; flex-shrink: 0; transition: transform 160ms var(--pm-ease-out); }
-        .nav-dd-cat.is-active { background: #7c3aed; color: #ffffff; box-shadow: 0 6px 14px rgba(124, 58, 237, 0.3); }
-        .nav-dd-cat.is-active svg { opacity: 1; transform: translateX(2px); }
-        .nav-dd-content { padding: 18px 20px 20px; min-height: 0; }
-        .nav-dd-groups { display: grid; gap: 16px; }
-        .nav-group-title {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 10.5px;
-            font-weight: 800;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #7c3aed;
-            margin-bottom: 8px;
-        }
-        .nav-group-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            border-radius: 0.65rem;
-            font-size: 13px;
-            color: #4b5563;
-            text-decoration: none;
-            transition: background-color 140ms ease, color 140ms ease, transform 140ms var(--pm-ease-out);
-        }
-        .nav-item::before {
-            content: '';
-            width: 5px;
-            height: 5px;
-            border-radius: 999px;
-            background: #d8b4fe;
-            flex-shrink: 0;
-            transition: background-color 140ms ease, transform 140ms ease;
-        }
-        @keyframes navDdIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .nav-dd-group { animation: navDdIn 200ms var(--pm-ease-out) backwards; }
-        .nav-dd-group:nth-child(2) { animation-delay: 45ms; }
-        .nav-dd-group:nth-child(3) { animation-delay: 90ms; }
-        @media (hover: hover) and (pointer: fine) {
-            .nav-dd-cat:hover:not(.is-active) { background: #f1ecfe; color: #5b21b6; }
-            .nav-item:hover { background: #f5f3ff; color: #6d28d9; transform: translateX(3px); }
-            .nav-item:hover::before { background: #7c3aed; transform: scale(1.4); }
-        }
-        .nav-dd-cat:active { transform: scale(0.98); }
-        @media (prefers-reduced-motion: reduce) {
-            .nav-dd { transform: translateX(-50%) !important; transition: opacity 120ms linear, visibility 0s; }
-            .nav-dd.is-open { transform: translateX(-50%) !important; }
-            .nav-dd-group { animation: none; }
-            .nav-dd-cat, .nav-item { transition: background-color 120ms ease, color 120ms ease; transform: none !important; }
-        }
 
         /* ===== FAQ ===== */
         .faq-wrap { margin-top: 72px; }
@@ -1003,6 +896,38 @@
             .pm-social { transform: none; transition: opacity 120ms linear, background-color 120ms ease; }
             .pm-fav.pop svg { animation: none; }
         }
+        .pm-thumbs {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 2px;
+        }
+        .pm-thumb {
+            flex: 0 0 auto;
+            width: 46px;
+            height: 46px;
+            padding: 0;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            overflow: hidden;
+            transition: border-color 140ms ease, transform 140ms ease;
+        }
+        .pm-thumb img { width: 100%; height: 100%; object-fit: cover; padding: 0; }
+        .pm-thumb.is-active { border-color: #7c3aed; transform: translateY(-2px); }
+        .pm-price-was {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-decoration: line-through;
+            margin-top: 2px;
+        }
     </style>
     <style>
         body {
@@ -1056,7 +981,7 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(168, 85, 247, 0.4), transparent 70%);
+            background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 40%, transparent), transparent 70%);
             opacity: 0;
             transition: opacity 0.2s ease;
             pointer-events: none;
@@ -1066,9 +991,9 @@
             opacity: 1;
         }
         .category-card:hover {
-            border-color: rgba(168, 85, 247, 0.6);
+            border-color: color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 60%, transparent);
             transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(168, 85, 247, 0.22);
+            box-shadow: 0 15px 35px color-mix(in srgb, var(--gh-fx-glow, var(--gh-fx-hover, #7c3aed)) 22%, transparent);
         }
         .product-card {
             position: relative;
@@ -1079,9 +1004,9 @@
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .product-card:hover {
-            border-color: rgba(168, 85, 247, 0.6);
+            border-color: color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 60%, transparent);
             transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(168, 85, 247, 0.18);
+            box-shadow: 0 15px 35px color-mix(in srgb, var(--gh-fx-glow, var(--gh-fx-hover, #7c3aed)) 18%, transparent);
         }
         .product-name {
             display: -webkit-box;
@@ -1123,120 +1048,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         select option { background-color: #ffffff; color: #1f2937; padding: 8px; }
-
-        /* ===== Nav Products Dropdown ===== */
-        .nav-dd {
-            position: absolute;
-            top: calc(100% + 10px);
-            left: 50%;
-            width: min(780px, calc(100vw - 32px));
-            transform: translateX(-50%) translateY(-6px) scale(0.985);
-            transform-origin: top center;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            z-index: 40;
-            transition: opacity 160ms var(--pm-ease-out), transform 180ms var(--pm-ease-out), visibility 0s linear 180ms;
-        }
-        .nav-dd.is-open {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-            transform: translateX(-50%) translateY(0) scale(1);
-            transition: opacity 180ms var(--pm-ease-out), transform 200ms var(--pm-ease-out), visibility 0s linear 0s;
-        }
-        .nav-dd-panel {
-            display: grid;
-            grid-template-columns: 232px minmax(0, 1fr);
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(229, 231, 235, 0.9);
-            border-radius: 1.25rem;
-            box-shadow: 0 26px 60px rgba(17, 24, 39, 0.2);
-            overflow: hidden;
-        }
-        .nav-dd-cats {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            padding: 10px;
-            background: #faf9ff;
-            border-right: 1px solid #f3f4f6;
-        }
-        .nav-dd-cat {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            width: 100%;
-            border: 0;
-            background: none;
-            padding: 11px 12px;
-            border-radius: 0.75rem;
-            font-size: 13px;
-            font-weight: 600;
-            color: #374151;
-            text-align: left;
-            cursor: pointer;
-            transition: background-color 140ms ease, color 140ms ease, transform 140ms var(--pm-ease-out);
-        }
-        .nav-dd-cat svg { width: 14px; height: 14px; opacity: 0.55; flex-shrink: 0; transition: transform 160ms var(--pm-ease-out); }
-        .nav-dd-cat.is-active { background: #7c3aed; color: #ffffff; box-shadow: 0 6px 14px rgba(124, 58, 237, 0.3); }
-        .nav-dd-cat.is-active svg { opacity: 1; transform: translateX(2px); }
-        .nav-dd-content { padding: 18px 20px 20px; min-height: 0; }
-        .nav-dd-groups { display: grid; gap: 16px; }
-        .nav-group-title {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 10.5px;
-            font-weight: 800;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #7c3aed;
-            margin-bottom: 8px;
-        }
-        .nav-group-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            border-radius: 0.65rem;
-            font-size: 13px;
-            color: #4b5563;
-            text-decoration: none;
-            transition: background-color 140ms ease, color 140ms ease, transform 140ms var(--pm-ease-out);
-        }
-        .nav-item::before {
-            content: '';
-            width: 5px;
-            height: 5px;
-            border-radius: 999px;
-            background: #d8b4fe;
-            flex-shrink: 0;
-            transition: background-color 140ms ease, transform 140ms ease;
-        }
-        @keyframes navDdIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .nav-dd-group { animation: navDdIn 200ms var(--pm-ease-out) backwards; }
-        .nav-dd-group:nth-child(2) { animation-delay: 45ms; }
-        .nav-dd-group:nth-child(3) { animation-delay: 90ms; }
-        @media (hover: hover) and (pointer: fine) {
-            .nav-dd-cat:hover:not(.is-active) { background: #f1ecfe; color: #5b21b6; }
-            .nav-item:hover { background: #f5f3ff; color: #6d28d9; transform: translateX(3px); }
-            .nav-item:hover::before { background: #7c3aed; transform: scale(1.4); }
-        }
-        .nav-dd-cat:active { transform: scale(0.98); }
-        @media (prefers-reduced-motion: reduce) {
-            .nav-dd { transform: translateX(-50%) !important; transition: opacity 120ms linear, visibility 0s; }
-            .nav-dd.is-open { transform: translateX(-50%) !important; }
-            .nav-dd-group { animation: none; }
-            .nav-dd-cat, .nav-item { transition: background-color 120ms ease, color 120ms ease; transform: none !important; }
-        }
 
         /* ===== FAQ ===== */
         .faq-wrap { margin-top: 72px; }
@@ -2545,7 +2356,7 @@
 
 <!-- Page loader -->
     <div id="pageLoader" class="pl" aria-hidden="true">
-        <img src="logo2.png" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'">
+        <img src="assets/img/logos/logo2.webp" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'" loading="eager" decoding="async">
         <div class="pl-ring"></div>
     </div>
     <script>
@@ -2687,7 +2498,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Tarjetas de Video">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-1.png" alt="Tarjeta Gráfica RTX 4070" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-1.webp" alt="Tarjeta Gráfica RTX 4070" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Top Ventas</span>
                         </div>
                         <h4 class="product-name">Tarjeta Gráfica NVIDIA GeForce RTX 4070 Super 12GB GDDR6X Gaming</h4>
@@ -2705,7 +2516,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Procesadores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-2.png" alt="Procesador AMD Ryzen 7" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-2.webp" alt="Procesador AMD Ryzen 7" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Destacado</span>
                         </div>
                         <h4 class="product-name">Procesador AMD Ryzen 7 7800X3D de 8 Núcleos 16 Hilos hasta 5.0GHz AM5</h4>
@@ -2723,7 +2534,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Teclados">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-3.png" alt="Teclado Mecánico RGB Pro" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-3.webp" alt="Teclado Mecánico RGB Pro" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Popular</span>
                         </div>
                         <h4 class="product-name">Teclado Mecánico Gamer RGB Pro con Switches Red Hot-Swap y RGB por Tecla</h4>
@@ -2741,7 +2552,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Computadoras" data-subcat="Monitores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-4.png" alt="Monitor Gamer Curvo 27" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-4.webp" alt="Monitor Gamer Curvo 27" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Oferta</span>
                         </div>
                         <h4 class="product-name">Monitor Gamer Curvo 27" Samsung Odyssey G5 180Hz QHD 2560x1440 1ms FreeSync Premium</h4>
@@ -2759,7 +2570,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Audífonos">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-5.png" alt="Audífonos Gamer 7.1" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-5.webp" alt="Audífonos Gamer 7.1" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Nuevo</span>
                         </div>
                         <h4 class="product-name">Audífonos Gamer 7.1 Surround</h4>
@@ -2777,7 +2588,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Tarjetas de Video">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg/500px-ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg" alt="RTX 4060 Ti" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg/500px-ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg" alt="RTX 4060 Ti" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Tarjeta Gráfica NVIDIA GeForce RTX 4060 Ti 8GB GDDR6 con DLSS 3 y Ray Tracing</h4>
                         <p class="product-sub">8GB GDDR6 DLSS 3</p>
@@ -2792,7 +2603,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Procesadores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-7.png" alt="Core i7-14700K" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-7.webp" alt="Core i7-14700K" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Procesador Intel Core i7-14700K de 20 Núcleos hasta 5.6GHz Socket LGA1700</h4>
                         <p class="product-sub">LGA1700 20 Nucleos 5.6GHz</p>
@@ -2807,7 +2618,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Tarjetas Madre Intel">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-8.png" alt="Z790 Motherboard" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-8.webp" alt="Z790 Motherboard" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Tarjeta Madre ASUS ROG Strix Z790-A Gaming WiFi DDR5 LGA1700 con Wi-Fi 6E</h4>
                         <p class="product-sub">DDR5 Wi-Fi 6E LGA1700</p>
@@ -2822,7 +2633,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Memorias Ram DDR5">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-9.avif" alt="RAM 32GB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-9.webp" alt="RAM 32GB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Memoria RAM Corsair Vengeance RGB 32GB DDR5 6000MHz CL30 Kit 2x16GB</h4>
                         <p class="product-sub">Kit 2x16GB 6000MHz CL30</p>
@@ -2837,7 +2648,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="SSD M.2">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg/500px-Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg" alt="SSD 2TB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg/500px-Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg" alt="SSD 2TB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">SSD M.2 NVMe Samsung 990 PRO 2TB PCIe 4.0 Lectura hasta 7450 MB/s</h4>
                         <p class="product-sub">Lectura hasta 7450 MB/s</p>
@@ -2852,7 +2663,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Fuentes de Poder">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-11.png" alt="PSU 850W" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-11.webp" alt="PSU 850W" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Fuente de Poder Corsair RM850x 850W 80 Plus Gold Totalmente Modular</h4>
                         <p class="product-sub">80 Plus Gold Modular</p>
@@ -2867,7 +2678,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Cases">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-12.png" alt="Case Lian Li" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-12.webp" alt="Case Lian Li" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Gabinete Lian Li O11 Dynamic EVO con Vidrio Templado Dual Chamber</h4>
                         <p class="product-sub">Vidrio Templado Dual Chamber</p>
@@ -2882,7 +2693,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Enfriamiento">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-13.webp" alt="Enfriamiento Líquido" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-13.webp" alt="Enfriamiento Líquido" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Refrigeración Líquida NZXT Kraken 360 RGB AIO para Procesador</h4>
                         <p class="product-sub">RGB AIO Liquid Cooler</p>
@@ -2897,7 +2708,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Mouses">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-14.png" alt="Mouse Superlight" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-14.webp" alt="Mouse Superlight" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Mouse Inalámbrico Logitech G Pro X Superlight 2 de 63g con Sensor HERO</h4>
                         <p class="product-sub">Mouse Inalámbrico 63g</p>
@@ -2912,7 +2723,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Sillas Gamer">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-15.png" alt="Silla Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-15.webp" alt="Silla Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Silla Gamer Secretlab Titan Evo Ergonómica en Cuero PU Talla Regular</h4>
                         <p class="product-sub">Ergonómica Cuero PU</p>
@@ -2927,7 +2738,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Laptops" data-subcat="Laptops">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-16.png" alt="Laptop Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-16.webp" alt="Laptop Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Laptop Gamer ASUS ROG Strix G16 Intel Core i7 RTX 4060 Pantalla 16" 240Hz</h4>
                         <p class="product-sub">i7 RTX 4060 16" 240Hz</p>
@@ -2942,7 +2753,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Computadoras" data-subcat="Monitores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-17.avif" alt="Monitor 24" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-17.webp" alt="Monitor 24" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Monitor Gamer 24" AOC 24G2SPE 165Hz IPS FHD 1920x1080 1ms FreeSync</h4>
                         <p class="product-sub">FHD 1ms FreeSync</p>
@@ -2957,7 +2768,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Micrófonos">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg/500px-Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg" alt="QuadCast S" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg/500px-Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg" alt="QuadCast S" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Micrófono HyperX QuadCast S USB Condensador con RGB y Antipop</h4>
                         <p class="product-sub">USB Condensador RGB</p>
@@ -2972,7 +2783,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Controles/Volantes">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-19.png" alt="Control Xbox" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-19.webp" alt="Control Xbox" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Control Inalámbrico Microsoft Xbox Series X Carbon Black para PC y Consola</h4>
                         <p class="product-sub">Carbon Black PC / Console</p>
@@ -2987,7 +2798,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Impresión" data-subcat="Router y Mesh">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-20.png" alt="Router WiFi 6" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-20.webp" alt="Router WiFi 6" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Router ASUS RT-AX82U WiFi 6 Gaming con Iluminación AURA RGB</h4>
                         <p class="product-sub">Gaming Router AURA RGB</p>
@@ -3002,7 +2813,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Computadoras" data-subcat="UPS / Respaldo Eléctrico">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-21.png" alt="UPS 1500VA" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-21.webp" alt="UPS 1500VA" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">UPS APC Back-UPS 1500VA de Respaldo Eléctrico Automático con Regulación</h4>
                         <p class="product-sub">Respaldo Eléctrico Automático</p>
@@ -3017,7 +2828,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Webcam">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-22.png" alt="Webcam C920" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-22.webp" alt="Webcam C920" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Cámara Web Logitech C920 HD Pro 1080p con Micrófono Estéreo</h4>
                         <p class="product-sub">1080p Streaming & Calls</p>
@@ -3032,7 +2843,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Impresión" data-subcat="Impresoras">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-23.png" alt="Impresora EcoTank" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-23.webp" alt="Impresora EcoTank" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Impresora Epson EcoTank L3250 Multifuncional WiFi con Botellas de Tinta</h4>
                         <p class="product-sub">Multifuncional WiFi Botellas</p>
@@ -3047,7 +2858,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Impresión" data-subcat="Accesorios">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://live.staticflickr.com/688/33264146426_fde684e26e_b.jpg" alt="Kit iFixit" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://live.staticflickr.com/688/33264146426_fde684e26e_b.jpg" alt="Kit iFixit" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Kit de Herramientas iFixit Pro Tech Toolkit para Reparación de PCs y Laptops</h4>
                         <p class="product-sub">Reparación PCs y Laptops</p>
@@ -3062,7 +2873,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Laptops" data-subcat="Accesorios">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-25.png" alt="Base Cooling" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-25.webp" alt="Base Cooling" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Base Refrigerante para Laptop RGB 17" con Ventiladores Silenciosos</h4>
                         <p class="product-sub">Ventiladores Silenciosos 17"</p>
@@ -3127,9 +2938,9 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
                     Contacto
                 </h4>
-                <p class="text-xs text-gray-500 mb-2">zulia, Venezuela</p>
-                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
-                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold">+58 (212) 555-GIGA</span></p>
+                <p class="text-xs text-gray-500 mb-2" data-gh="address">zulia, Venezuela</p>
+                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" data-gh="email" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
+                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold" data-gh="phone">+58 (212) 555-GIGA</span></p>
             </div>
         </div>
         <div class="max-w-7xl mx-auto pt-6 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400">
@@ -3206,8 +3017,9 @@
 
             <div class="pm-grid">
                 <div class="pm-media">
-                    <img id="pmImg" alt="">
+                    <img id="pmImg" alt="" loading="lazy" decoding="async">
                     <span class="pm-badge" id="pmBadge" hidden></span>
+                    <div class="pm-thumbs" id="pmThumbs" hidden></div>
                 </div>
 
                 <div class="pm-info">
@@ -3219,6 +3031,7 @@
                         <div class="pm-price-block">
                             <span class="pm-price-label" id="pmPriceLabel">Precio USD</span>
                             <span class="pm-price" id="pmPrice"></span>
+                            <span class="pm-price-was" id="pmWas" hidden></span>
                         </div>
                         <div class="pm-switch" id="pmSwitch" data-active="usd" role="group" aria-label="Moneda del precio">
                             <span class="pm-switch-thumb" aria-hidden="true"></span>
@@ -3297,7 +3110,7 @@
         </div>
     </div>
 
-    <script src="cart.js"></script>
+    <script src="assets/js/cart.js"></script>
     <script>
         (function () {
             const RATE_BS = 36.50;
@@ -3306,6 +3119,8 @@
             const pmClose = document.getElementById('pmClose');
             const pmImg = document.getElementById('pmImg');
             const pmBadge = document.getElementById('pmBadge');
+            const pmThumbs = document.getElementById('pmThumbs');
+            const pmWas = document.getElementById('pmWas');
             const pmTitle = document.getElementById('pmTitle');
             const pmSub = document.getElementById('pmSub');
             const pmPrice = document.getElementById('pmPrice');
@@ -3327,6 +3142,7 @@
             const pmCrumbName = document.getElementById('pmCrumbName');
 
             let current = null;
+            function ghImg(v, w) { return (window.GigaSB && GigaSB.resolveImage) ? GigaSB.resolveImage(v, w) : v; }
             let currency = 'usd';
             let lastFocused = null;
             let buyTimer = null;
@@ -3339,27 +3155,41 @@
                 const img = card.querySelector('img');
                 const priceEl = [...card.querySelectorAll('span')].find(s => s.textContent.includes('$'));
                 const badgeEl = card.querySelector('span[class*="top-2"]');
+                const p = card.__gdata || null;
+                const gallery = ((p && p.images && p.images.length) ? p.images.filter(Boolean)
+                    : (p && p.image ? [p.image] : (img && img.getAttribute('src') ? [img.getAttribute('src')] : [])))
+                    .map(function (u) { return ghImg(u, 800); });
+                const h4 = card.querySelector('h4');
+                const pEl = card.querySelector('p');
                 return {
-                    name: card.querySelector('h4').textContent.trim(),
-                    sub: card.querySelector('p').textContent.trim(),
-                    img: img ? img.getAttribute('src') : '',
+                    name: (p && p.name) || (h4 ? h4.textContent.trim() : ''),
+                    sub: (p && p.sub) || (pEl ? pEl.textContent.trim() : ''),
+                    img: gallery[0] || '',
+                    gallery: gallery,
                     alt: img ? img.getAttribute('alt') : '',
-                    usd: priceEl ? parseFloat(priceEl.textContent.replace(/[^0-9.]/g, '')) : 0,
-                    badge: badgeEl ? badgeEl.textContent.trim() : '',
-                    cat: (card.dataset.cat || '').trim(),
-                    subcat: (card.dataset.subcat || '').trim()
+                    usd: p && p.price != null ? Number(p.price) : (priceEl ? parseFloat(priceEl.textContent.replace(/[^0-9.]/g, '')) : 0),
+                    original: p && p.original_price ? Number(p.original_price) : 0,
+                    desc: (p && p.description) ? p.description : '',
+                    badge: (p && p.badge) || (badgeEl ? badgeEl.textContent.trim() : ''),
+                    cat: (p && p.category_name) || (card.dataset.cat || '').trim(),
+                    subcat: (p && p.subcategory_name) || (card.dataset.subcat || '').trim()
                 };
             }
 
             function renderPrice() {
                 if (!current) return;
+                const hasOrig = current.original && current.original > current.usd;
                 if (currency === 'usd') {
                     pmPriceLabel.textContent = 'Precio USD';
                     pmPrice.textContent = fmtUSD(current.usd);
+                    if (hasOrig) { pmWas.textContent = fmtUSD(current.original); pmWas.hidden = false; }
+                    else { pmWas.hidden = true; }
                     pmRate.hidden = true;
                 } else {
                     pmPriceLabel.textContent = 'Precio Ref (Bs)';
                     pmPrice.textContent = fmtBS(current.usd);
+                    if (hasOrig) { pmWas.textContent = fmtBS(current.original); pmWas.hidden = false; }
+                    else { pmWas.hidden = true; }
                     pmRate.textContent = 'Tasa de referencia 1 USD = ' + RATE_BS.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + ' Bs';
                     pmRate.hidden = false;
                 }
@@ -3379,9 +3209,30 @@
                 pmFav.title = active ? 'Quitar de favoritos' : 'Agregar a favoritos';
             }
 
-            function renderContent() {
-                pmImg.src = current.img;
+            function renderGallery() {
+                const g = (current.gallery && current.gallery.length) ? current.gallery : (current.img ? [current.img] : []);
+                pmImg.src = g[0] || '';
                 pmImg.alt = current.alt || current.name;
+                if (g.length > 1) {
+                    pmThumbs.hidden = false;
+                    pmThumbs.innerHTML = g.map((src, i) =>
+                        '<button type="button" class="pm-thumb' + (i === 0 ? ' is-active' : '') + '" data-src="' + src + '" aria-label="Ver imagen ' + (i + 1) + '"><img src="' + src + '" alt="" loading="lazy" decoding="async"></button>'
+                    ).join('');
+                } else {
+                    pmThumbs.hidden = true;
+                    pmThumbs.innerHTML = '';
+                }
+            }
+
+            pmThumbs.addEventListener('click', e => {
+                const b = e.target.closest('.pm-thumb');
+                if (!b) return;
+                pmImg.src = b.dataset.src;
+                pmThumbs.querySelectorAll('.pm-thumb').forEach(t => t.classList.toggle('is-active', t === b));
+            });
+
+            function renderContent() {
+                renderGallery();
                 renderCrumbs(current.cat, current.subcat, current.name);
                 pmTitle.textContent = current.name;
                 pmSub.textContent = current.sub;
@@ -3391,11 +3242,15 @@
                 } else {
                     pmBadge.hidden = true;
                 }
-                pmDescText.innerHTML =
-                    '<p><strong>' + current.name + '</strong> — ' + current.sub + '. Seleccionado por el equipo técnico de MANIAWORLD y probado en banco de pruebas antes de salir a la venta, garantizando rendimiento estable, temperaturas controladas y compatibilidad verificada con los estándares actuales de la industria.</p>' +
-                    '<p>El producto se entrega nuevo y sellado de fábrica, con su empaque original, manuales, accesorios completos y certificados de cumplimiento. Incluye garantía de 12 meses por fallas de fabricación, asistencia técnica especializada para la instalación y configuración inicial, así como soporte postventa directo por WhatsApp con nuestro personal en zulia.</p>' +
-                    '<p>MANIAWORLD despacha a domicilio a toda Venezuela: zulia (24-48h), Valencia y Maracaibo (48-72h) y resto del país de 3 a 5 días hábiles. Aceptamos transferencia bancaria, Pago Móvil, Zelle, tarjetas de crédito y débito, así como pago contra entrega en zonas cubiertas. Consulta disponibilidad exacta, descuentos por cantidad y opciones de financiamiento antes de finalizar tu compra.</p>' +
-                    '<p>¿Dudas sobre compatibilidad con tu equipo actual? Escríbenos antes de comprar y te asesoramos con la instalación, la actualización de firmware y las mejores alternativas de precio dentro del catálogo de la tienda.</p>';
+                if (current.desc && current.desc.trim()) {
+                    pmDescText.innerHTML = current.desc.split(/\n+/).map(t => t.trim()).filter(Boolean).map(t => '<p>' + t + '</p>').join('');
+                } else {
+                    pmDescText.innerHTML =
+                        '<p><strong>' + current.name + '</strong> — ' + current.sub + '. Seleccionado por el equipo técnico de MANIAWORLD y probado en banco de pruebas antes de salir a la venta, garantizando rendimiento estable, temperaturas controladas y compatibilidad verificada con los estándares actuales de la industria.</p>' +
+                        '<p>El producto se entrega nuevo y sellado de fábrica, con su empaque original, manuales, accesorios completos y certificados de cumplimiento. Incluye garantía de 12 meses por fallas de fabricación, asistencia técnica especializada para la instalación y configuración inicial, así como soporte postventa directo por WhatsApp con nuestro personal en zulia.</p>' +
+                        '<p>MANIAWORLD despacha a domicilio a toda Venezuela: zulia (24-48h), Valencia y Maracaibo (48-72h) y resto del país de 3 a 5 días hábiles. Aceptamos transferencia bancaria, Pago Móvil, Zelle, tarjetas de crédito y débito, así como pago contra entrega en zonas cubiertas. Consulta disponibilidad exacta, descuentos por cantidad y opciones de financiamiento antes de finalizar tu compra.</p>' +
+                        '<p>¿Dudas sobre compatibilidad con tu equipo actual? Escríbenos antes de comprar y te asesoramos con la instalación, la actualización de firmware y las mejores alternativas de precio dentro del catálogo de la tienda.</p>';
+                }
                 const specs = [
                     ['Modelo', current.name],
                     ['Resumen técnico', current.sub],
@@ -3457,9 +3312,19 @@
             function shareLinks() {
                 const base = location.href.split('#')[0];
                 const url = encodeURIComponent(base + '#' + encodeURIComponent(current.name));
-                const text = encodeURIComponent(current.name + ' — ' + current.sub + ' | MANIAWORLD');
+                const store = (window.GigaData && GigaData.store) ? GigaData.store() : {};
+                const DEFAULT_TPL = '{name} — {sub} | {storeName}';
+                const tpl = (store.shareTemplate && store.shareTemplate.trim()) ? store.shareTemplate : DEFAULT_TPL;
+                const raw = window.ghTemplate ? ghTemplate(tpl, {
+                    storeName: store.name || 'MANIAWORLD',
+                    name: current.name,
+                    sub: current.sub,
+                    url: base
+                }) : (current.name + ' — ' + current.sub + ' | MANIAWORLD');
+                const text = encodeURIComponent(raw);
+                const waBase = window.waLink ? waLink(store.whatsapp || '', raw) : ('https://wa.me/?text=' + text);
                 return {
-                    whatsapp: 'https://wa.me/?text=' + text + '%20' + url,
+                    whatsapp: waBase + '%20' + url,
                     facebook: 'https://www.facebook.com/sharer/sharer.php?u=' + url,
                     x: 'https://twitter.com/intent/tweet?text=' + text + '&url=' + url,
                     telegram: 'https://t.me/share/url?url=' + url + '&text=' + text
@@ -3650,7 +3515,7 @@
                 cdList.innerHTML = items.map(item => {
                     const id = encodeURIComponent(item.id);
                     return '<div class="cd-item">' +
-                        (item.img ? '<img class="cd-thumb" src="' + esc(item.img) + '" alt="">' : '<div class="cd-thumb"></div>') +
+                        (item.img ? '<img class="cd-thumb" src="' + esc(item.img) + '" alt="" loading="lazy" decoding="async">' : '<div class="cd-thumb"></div>') +
                         '<div class="cd-main">' +
                             '<div class="cd-name">' + esc(item.name) + '</div>' +
                             '<div class="cd-unit">' + fmt(item.price) + ' c/u</div>' +
@@ -3833,24 +3698,27 @@
             pagEl.setAttribute('aria-label', 'Paginación');
             grid.parentNode.insertBefore(pagEl, emptyEl);
 
-            const cards = [...grid.querySelectorAll('.product-card')];
-            const data = cards.map((el, i) => {
-                const priceEl = [...el.querySelectorAll('span')].find(s => s.textContent.includes('$'));
-                const name = el.querySelector('.product-name').textContent.trim();
-                const subEl = el.querySelector('.product-sub');
-                return {
-                    el: el,
-                    i: i,
-                    name: name,
-                    cat: el.dataset.cat || '',
-                    subcat: el.dataset.subcat || '',
-                    text: (name + ' ' + (subEl ? subEl.textContent : '')).toLowerCase(),
-                    price: priceEl ? parseFloat(priceEl.textContent.replace(/[^0-9.]/g, '')) : 0
-                };
-            });
+            function buildData() {
+                return [...grid.querySelectorAll('.product-card')].map((el, i) => {
+                    const priceEl = [...el.querySelectorAll('span')].find(s => s.textContent.includes('$'));
+                    const nameEl = el.querySelector('.product-name');
+                    const name = nameEl ? nameEl.textContent.trim() : '';
+                    const subEl = el.querySelector('.product-sub');
+                    return {
+                        el: el,
+                        i: i,
+                        name: name,
+                        cat: el.dataset.cat || '',
+                        subcat: el.dataset.subcat || '',
+                        text: (name + ' ' + (subEl ? subEl.textContent : '')).toLowerCase(),
+                        price: priceEl ? parseFloat(priceEl.textContent.replace(/[^0-9.]/g, '')) : 0
+                    };
+                });
+            }
+            let data = buildData();
 
-            const absMin = Math.min.apply(null, data.map(d => d.price));
-            const absMax = Math.max.apply(null, data.map(d => d.price));
+            let absMin = Math.min.apply(null, data.map(d => d.price));
+            let absMax = Math.max.apply(null, data.map(d => d.price));
             const state = { sort: 'default', min: absMin, max: absMax, cat: '', subcat: '', subcats: null, section: '', q: '', page: 1 };
 
             [loRange, hiRange].forEach(r => {
@@ -4001,7 +3869,22 @@
                 refreshCatLabel();
             }
 
-            const SUB_SET = new Set(data.map(d => d.subcat).filter(Boolean));
+            let SUB_SET = new Set(data.map(d => d.subcat).filter(Boolean));
+
+            /* Re-lee el DOM tras la hidratacion dinamica (evento gh:ready). */
+            function refreshData() {
+                data = buildData();
+                absMin = Math.min.apply(null, data.map(d => d.price));
+                absMax = Math.max.apply(null, data.map(d => d.price));
+                [loRange, hiRange].forEach(r => { r.min = absMin; r.max = absMax; });
+                state.min = absMin;
+                state.max = absMax;
+                SUB_SET = new Set(data.map(d => d.subcat).filter(Boolean));
+                minInp.placeholder = String(absMin);
+                maxInp.placeholder = String(absMax);
+                syncRangeUI();
+                apply();
+            }
 
             function setSort(v, label) {
                 state.sort = v;
@@ -4109,43 +3992,59 @@
             function applyCatFromName(name) {
                 if (name && typeof name === 'object') {
                     setSubcats(name.items, name.section);
-                    resetPage(); apply(); scrollToCr(true);
+                    resetPage(); apply(); setMeta(); scrollToCr(true);
                     return true;
                 }
-                if (!name) { setCat(''); resetPage(); apply(); return false; }
+                if (!name) { setCat(''); resetPage(); apply(); setMeta(); return false; }
                 if (CATS.indexOf(name) !== -1) {
                     setCat(name);
-                    resetPage(); apply(); scrollToCr(true);
+                    resetPage(); apply(); setMeta(); scrollToCr(true);
                     return true;
                 }
                 if (SUB_SET.has(name)) {
                     setSubcat(name);
-                    resetPage(); apply(); scrollToCr(true);
+                    resetPage(); apply(); setMeta(); scrollToCr(true);
                     return true;
                 }
                 var v = CAT_MAP[name] || name;
                 setCat(v);
-                resetPage(); apply(); scrollToCr(true);
+                resetPage(); apply(); setMeta(); scrollToCr(true);
                 return CATS.indexOf(v) !== -1;
             }
             window.ghApplyCat = applyCatFromName;
 
-            window.addEventListener('DOMContentLoaded', function () {
+            function setMeta() {
+                var scope = state.section || state.subcat || state.cat;
+                document.title = (scope ? scope + ' | ' : '') + 'Catalogo · GIGAHEARTZ';
+            }
+
+            function initFromURL() {
                 var sp = new URLSearchParams(location.search);
+                var q = sp.get('q');
+                if (q) { state.q = q; searchInp.value = q; }
                 var sub = sp.get('sub');
                 var sec = sp.get('sec');
-                if (sub) { setSubcat(sub); resetPage(); apply(); scrollToCr(true); return; }
-                if (sec) {
-                    var items = window.ghCatSection ? window.ghCatSection(sec) : null;
-                    if (items) { setSubcats(items, sec); resetPage(); apply(); scrollToCr(true); }
-                    return;
-                }
                 var p = sp.get('cat');
-                if (!p) return;
-                var v = CAT_MAP[p] || p;
-                if (CATS.indexOf(v) === -1) return;
-                setCat(v);
-                resetPage(); apply(); scrollToCr(false);
+                var scrolled = false;
+                if (sub) { setSubcat(sub); scrolled = true; }
+                else if (sec) {
+                    var items = window.ghCatSection ? window.ghCatSection(sec) : null;
+                    if (items) { setSubcats(items, sec); scrolled = true; }
+                } else if (p) {
+                    var v = CAT_MAP[p] || p;
+                    if (CATS.indexOf(v) !== -1) { setCat(v); scrolled = true; }
+                }
+                resetPage(); apply();
+                setMeta();
+                if (scrolled) scrollToCr(true);
+            }
+
+            window.addEventListener('DOMContentLoaded', initFromURL);
+
+            /* Re-aplica tras la hidratacion dinamica desde Supabase. */
+            window.addEventListener('gh:ready', function () {
+                refreshData();
+                initFromURL();
             });
 
             apply();
@@ -4190,7 +4089,7 @@
             });
         })();
     </script>
-    <script src="categorias.js"></script>
+    <script src="assets/js/categorias.js"></script>
     <script>
         (function () {
             var menu = document.getElementById('navMenu');
@@ -4208,15 +4107,15 @@
     </script>
     <script>
         (function () {
-            const sfxPop = new Audio('Sonido/pop.mp3');
+            const sfxPop = new Audio('assets/audio/pop.mp3');
             sfxPop.volume = 0.45;
             const sfxHoverSrcs = [
-                'Sonido/danevaer-mechanical-keyboard-typing-brow.wav',
-                'Sonido/danevaer-mechanical-keyboard-typing-brow(1).wav',
-                'Sonido/danevaer-mechanical-keyboard-typing-brow(2).wav',
-                'Sonido/danevaer-mechanical-keyboard-typing-brow(3).wav',
-                'Sonido/danevaer-mechanical-keyboard-typing-brow(4).wav',
-                'Sonido/danevaer-mechanical-keyboard-typing-brown-switches-436103_[cut_0sec].mp3'
+                'assets/audio/danevaer-mechanical-keyboard-typing-brow.wav',
+                'assets/audio/danevaer-mechanical-keyboard-typing-brow(1).wav',
+                'assets/audio/danevaer-mechanical-keyboard-typing-brow(2).wav',
+                'assets/audio/danevaer-mechanical-keyboard-typing-brow(3).wav',
+                'assets/audio/danevaer-mechanical-keyboard-typing-brow(4).wav',
+                'assets/audio/danevaer-mechanical-keyboard-typing-brown-switches-436103_[cut_0sec].mp3'
             ];
             function playPop() { sfxPop.currentTime = 0; sfxPop.play().catch(() => {}); }
             function playHover() {
@@ -4239,7 +4138,9 @@
             }).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
         })();
     </script>
-    <script src="bottomnav.js"></script>
-    <script src="transition.js"></script>
+    <script src="assets/js/bottomnav.js"></script>
+    <script src="assets/js/transition.js"></script>
+    <!-- Datos dinamicos (Supabase): config/sb/data ya cargados en <head> -->
+    <script src="assets/js/store.js"></script>
 </body>
 </html>

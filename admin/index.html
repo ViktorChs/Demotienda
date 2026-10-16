@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Panel · MANIAWORLD</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginView" class="login-wrap" hidden>
+  <form id="loginForm" class="login-card">
+    <h1>Panel de administración</h1>
+    <p class="sub">MANIAWORLD · gestiona el catálogo y la tienda</p>
+    <label for="lgEmail">Correo</label>
+    <input id="lgEmail" type="email" autocomplete="username" required placeholder="admin@gigahertzstore.com">
+    <label for="lgPass">Contraseña</label>
+    <input id="lgPass" type="password" autocomplete="current-password" required placeholder="••••••">
+    <div id="lgError" class="field help" style="color:var(--danger);display:none"></div>
+    <button class="btn primary" id="lgBtn" style="width:100%;margin-top:20px;justify-content:center">Entrar</button>
+    <p class="hint">Si aún no tienes proyecto Supabase, edita <code>assets/js/config.js</code>.</p>
+  </form>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appView" class="app" hidden>
+  <aside id="sidebar" class="sidebar">
+    <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Cerrar menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="ws">
+      <div class="ws-trigger">
+        <span class="ws-l">
+          <span class="ws-avatar">M</span>
+          <span class="ws-meta">
+            <span class="ws-name">MANIAWORLD</span>
+            <span class="ws-plan">Panel de tienda</span>
+          </span>
+        </span>
+      </div>
+    </div>
+    <nav class="nav" id="sideNav"></nav>
+    <div class="sidebar-foot">
+      <div class="who" id="whoami">—</div>
+      <a class="nav-item" href="../index.html" target="_blank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+        <span>Ver tienda</span>
+      </a>
+      <button class="nav-item" id="logoutBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        <span>Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn ghost menu-toggle" id="menuToggle" aria-label="Menú">☰</button>
+        <h2 id="viewTitle">Panel</h2>
+      </div>
+      <button class="search-trigger" id="searchBtn" aria-label="Buscar (Ctrl+K)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span>Buscar</span><kbd>Ctrl K</kbd>
+      </button>
+      <div class="actions" id="viewActions"></div>
+    </header>
+    <section class="view" id="view"></section>
+  </div>
+</div>
+
+<!-- ================= MODAL / TOAST / PALETTE ================= -->
+<div id="modalRoot"></div>
+<div id="paletteRoot" hidden></div>
+<div id="toast"></div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/sb.js"></script>
+<script src="color-picker.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -3,11 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://isnbkqgzncjgttijzlmo.supabase.co">
+    <link rel="preload" as="image" href="assets/img/logos/logo2.webp" fetchpriority="high">
     <title>MANIAWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="theme.js"></script>
-    <link rel="stylesheet" href="dark.css">
-    <link rel="stylesheet" href="glow-cards.css">
+    <script src="assets/js/theme.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/sb.js"></script>
+<script src="assets/js/data.js"></script>
+    <link rel="stylesheet" href="assets/css/dark.css">
+    <link rel="stylesheet" href="assets/css/glow-cards.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -101,7 +109,7 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(168, 85, 247, 0.4), transparent 70%);
+            background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 40%, transparent), transparent 70%);
             opacity: 0;
             transition: opacity 0.2s ease;
             pointer-events: none;
@@ -111,8 +119,8 @@
             opacity: 1;
         }
         .category-card:hover {
-            border-color: rgba(168, 85, 247, 0.6);
-            box-shadow: 0 15px 35px rgba(168, 85, 247, 0.22);
+            border-color: color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 60%, transparent);
+            box-shadow: 0 15px 35px color-mix(in srgb, var(--gh-fx-glow, var(--gh-fx-hover, #7c3aed)) 22%, transparent);
         }
         .product-card {
             position: relative;
@@ -123,9 +131,9 @@
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .product-card:hover {
-            border-color: rgba(168, 85, 247, 0.6);
+            border-color: color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 60%, transparent);
             transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(168, 85, 247, 0.18);
+            box-shadow: 0 15px 35px color-mix(in srgb, var(--gh-fx-glow, var(--gh-fx-hover, #7c3aed)) 18%, transparent);
         }
         .product-name {
             display: -webkit-box;
@@ -167,120 +175,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         select option { background-color: #ffffff; color: #1f2937; padding: 8px; }
-
-        /* ===== Nav Products Dropdown ===== */
-        .nav-dd {
-            position: absolute;
-            top: calc(100% + 10px);
-            left: 50%;
-            width: min(780px, calc(100vw - 32px));
-            transform: translateX(-50%) translateY(-6px) scale(0.985);
-            transform-origin: top center;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            z-index: 40;
-            transition: opacity 160ms var(--pm-ease-out), transform 180ms var(--pm-ease-out), visibility 0s linear 180ms;
-        }
-        .nav-dd.is-open {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-            transform: translateX(-50%) translateY(0) scale(1);
-            transition: opacity 180ms var(--pm-ease-out), transform 200ms var(--pm-ease-out), visibility 0s linear 0s;
-        }
-        .nav-dd-panel {
-            display: grid;
-            grid-template-columns: 232px minmax(0, 1fr);
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(229, 231, 235, 0.9);
-            border-radius: 1.25rem;
-            box-shadow: 0 26px 60px rgba(17, 24, 39, 0.2);
-            overflow: hidden;
-        }
-        .nav-dd-cats {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            padding: 10px;
-            background: #faf9ff;
-            border-right: 1px solid #f3f4f6;
-        }
-        .nav-dd-cat {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            width: 100%;
-            border: 0;
-            background: none;
-            padding: 11px 12px;
-            border-radius: 0.75rem;
-            font-size: 13px;
-            font-weight: 600;
-            color: #374151;
-            text-align: left;
-            cursor: pointer;
-            transition: background-color 140ms ease, color 140ms ease, transform 140ms var(--pm-ease-out);
-        }
-        .nav-dd-cat svg { width: 14px; height: 14px; opacity: 0.55; flex-shrink: 0; transition: transform 160ms var(--pm-ease-out); }
-        .nav-dd-cat.is-active { background: #7c3aed; color: #ffffff; box-shadow: 0 6px 14px rgba(124, 58, 237, 0.3); }
-        .nav-dd-cat.is-active svg { opacity: 1; transform: translateX(2px); }
-        .nav-dd-content { padding: 18px 20px 20px; min-height: 0; }
-        .nav-dd-groups { display: grid; gap: 16px; }
-        .nav-group-title {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 10.5px;
-            font-weight: 800;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #7c3aed;
-            margin-bottom: 8px;
-        }
-        .nav-group-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            border-radius: 0.65rem;
-            font-size: 13px;
-            color: #4b5563;
-            text-decoration: none;
-            transition: background-color 140ms ease, color 140ms ease, transform 140ms var(--pm-ease-out);
-        }
-        .nav-item::before {
-            content: '';
-            width: 5px;
-            height: 5px;
-            border-radius: 999px;
-            background: #d8b4fe;
-            flex-shrink: 0;
-            transition: background-color 140ms ease, transform 140ms ease;
-        }
-        @keyframes navDdIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .nav-dd-group { animation: navDdIn 200ms var(--pm-ease-out) backwards; }
-        .nav-dd-group:nth-child(2) { animation-delay: 45ms; }
-        .nav-dd-group:nth-child(3) { animation-delay: 90ms; }
-        @media (hover: hover) and (pointer: fine) {
-            .nav-dd-cat:hover:not(.is-active) { background: #f1ecfe; color: #5b21b6; }
-            .nav-item:hover { background: #f5f3ff; color: #6d28d9; transform: translateX(3px); }
-            .nav-item:hover::before { background: #7c3aed; transform: scale(1.4); }
-        }
-        .nav-dd-cat:active { transform: scale(0.98); }
-        @media (prefers-reduced-motion: reduce) {
-            .nav-dd { transform: translateX(-50%) !important; transition: opacity 120ms linear, visibility 0s; }
-            .nav-dd.is-open { transform: translateX(-50%) !important; }
-            .nav-dd-group { animation: none; }
-            .nav-dd-cat, .nav-item { transition: background-color 120ms ease, color 120ms ease; transform: none !important; }
-        }
 
         /* ===== FAQ ===== */
         .faq-wrap { margin-top: 72px; }
@@ -1147,14 +1041,14 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
-            background: radial-gradient(circle 140px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(168, 85, 247, 0.28), transparent 70%);
+            background: radial-gradient(circle 140px at var(--mouse-x, 50%) var(--mouse-y, 50%), color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 28%, transparent), transparent 70%);
             opacity: 0;
             transition: opacity 0.2s ease;
             pointer-events: none;
             z-index: 0;
         }
         .combo-card:hover::before { opacity: 1; }
-        .combo-card:hover { border-color: rgba(168, 85, 247, 0.6); transform: translateY(-4px); box-shadow: 0 15px 35px rgba(168, 85, 247, 0.18); }
+        .combo-card:hover { border-color: color-mix(in srgb, var(--gh-fx-hover, #7c3aed) 60%, transparent); transform: translateY(-4px); box-shadow: 0 15px 35px color-mix(in srgb, var(--gh-fx-glow, var(--gh-fx-hover, #7c3aed)) 18%, transparent); }
         .combo-card > * { position: relative; z-index: 1; }
         .combo-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
         .combo-cpu { display: flex; flex-direction: column; line-height: 1.05; }
@@ -1331,7 +1225,7 @@
 
     <!-- Page loader -->
     <div id="pageLoader" class="pl" aria-hidden="true">
-        <img src="logo2.png" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'">
+        <img src="assets/img/logos/logo2.webp" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'" loading="eager" decoding="async">
         <div class="pl-ring"></div>
     </div>
     <script>
@@ -1365,7 +1259,7 @@
 
         <!-- Center Logo -->
         <div class="hero-logo absolute inset-0 flex items-center justify-center z-10 pointer-events-none p-4 pb-36">
-            <img src="logo2.png" alt="MANIAWORLD" class="hero-logo-img h-auto object-contain drop-shadow-xl pointer-events-auto transition-transform duration-300 hover:scale-105" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'">
+            <img src="assets/img/logos/logo2.webp" alt="MANIAWORLD" class="hero-logo-img h-auto object-contain drop-shadow-xl pointer-events-auto transition-transform duration-300 hover:scale-105" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'" loading="eager" decoding="async" fetchpriority="high">
         </div>
 
         <!-- Bottom Category Slider Bar -->
@@ -1396,20 +1290,12 @@
 
         <div class="hidden lg:flex items-center space-x-6 text-sm font-medium text-gray-700 absolute left-1/2 -translate-x-1/2">
             <a href="#inicio" class="hover:text-purple-600 transition-colors">Inicio</a>
-                            <a href="catalogo.html" id="navProductos" class="hover:text-purple-600 transition-colors" aria-haspopup="true" aria-expanded="false">Productos</a>
+                            <a href="catalogo.html" id="navProductos" class="hover:text-purple-600 transition-colors">Productos</a>
                 <a href="#productos" class="js-cat-nav hover:text-purple-600 transition-colors cursor-pointer">Categorias</a>
             <a href="ubicacion.html" class="hover:text-purple-600 transition-colors">Ubicación</a>
             <a href="contacto.html" class="hover:text-purple-600 transition-colors">Contacto</a>
         </div>
 
-        <!-- Products Dropdown -->
-        <div id="navDropdown" class="nav-dd" role="menu" aria-label="Menú de productos">
-            <div class="nav-dd-panel">
-                <div class="nav-dd-cats" id="navDDCats"></div>
-                <div class="nav-dd-content" id="navDDContent"></div>
-            </div>
-        </div>
-        
         <div class="flex items-center space-x-2 sm:space-x-3 text-gray-800">
             <button class="p-2 rounded-full hover:bg-gray-200/60 transition-colors" title="Buscar">
                 <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -1448,7 +1334,7 @@
                     <div class="combo-viewport no-scrollbar" id="comboViewport">
                         <div class="combo-track" id="comboTrack">
                             <!-- Combo 1 -->
-                            <article class="combo-card" data-name="Combo Gamer Intel i5" data-price="499" data-img="case1.webp" data-cat="Combos" data-subcat="PC de Escritorio">
+                            <article class="combo-card" data-name="Combo Gamer Intel i5" data-price="499" data-img="assets/img/combos/case1.webp" data-cat="Combos" data-subcat="PC de Escritorio">
                                 <div class="combo-top">
                                     <div class="combo-cpu">
                                         <span class="combo-cpu-line1">Intel Core</span>
@@ -1458,7 +1344,7 @@
                                 </div>
                                 <div class="combo-main">
                                     <div class="combo-imgwrap">
-                                        <img class="combo-case" src="case1.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';">
+                                        <img class="combo-case" src="assets/img/combos/case1.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';" loading="lazy" decoding="async">
                                     </div>
                                     <ul class="combo-specs">
                                         <li>12GB DDR4</li>
@@ -1475,7 +1361,7 @@
                             </article>
 
                             <!-- Combo 2 -->
-                            <article class="combo-card" data-name="Combo Ryzen 5" data-price="649" data-img="case2.webp" data-cat="Combos" data-subcat="PC de Escritorio">
+                            <article class="combo-card" data-name="Combo Ryzen 5" data-price="649" data-img="assets/img/combos/case2.webp" data-cat="Combos" data-subcat="PC de Escritorio">
                                 <div class="combo-top">
                                     <div class="combo-cpu">
                                         <span class="combo-cpu-line1">AMD Ryzen</span>
@@ -1485,7 +1371,7 @@
                                 </div>
                                 <div class="combo-main">
                                     <div class="combo-imgwrap">
-                                        <img class="combo-case" src="case2.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';">
+                                        <img class="combo-case" src="assets/img/combos/case2.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';" loading="lazy" decoding="async">
                                     </div>
                                     <ul class="combo-specs">
                                         <li>16GB DDR4</li>
@@ -1502,7 +1388,7 @@
                             </article>
 
                             <!-- Combo 3 -->
-                            <article class="combo-card" data-name="Combo Intel i7 DDR5" data-price="949" data-img="case3.webp" data-cat="Combos" data-subcat="PC de Escritorio">
+                            <article class="combo-card" data-name="Combo Intel i7 DDR5" data-price="949" data-img="assets/img/combos/case3.webp" data-cat="Combos" data-subcat="PC de Escritorio">
                                 <div class="combo-top">
                                     <div class="combo-cpu">
                                         <span class="combo-cpu-line1">Intel Core</span>
@@ -1512,7 +1398,7 @@
                                 </div>
                                 <div class="combo-main">
                                     <div class="combo-imgwrap">
-                                        <img class="combo-case" src="case3.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';">
+                                        <img class="combo-case" src="assets/img/combos/case3.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';" loading="lazy" decoding="async">
                                     </div>
                                     <ul class="combo-specs">
                                         <li>16GB DDR5</li>
@@ -1529,7 +1415,7 @@
                             </article>
 
                             <!-- Combo 4 -->
-                            <article class="combo-card" data-name="Combo Ryzen 7 Pro" data-price="1399" data-img="case4.webp" data-cat="Combos" data-subcat="PC de Escritorio">
+                            <article class="combo-card" data-name="Combo Ryzen 7 Pro" data-price="1399" data-img="assets/img/combos/case4.webp" data-cat="Combos" data-subcat="PC de Escritorio">
                                 <div class="combo-top">
                                     <div class="combo-cpu">
                                         <span class="combo-cpu-line1">AMD Ryzen</span>
@@ -1539,8 +1425,8 @@
                                 </div>
                                 <div class="combo-main">
                                     <div class="combo-imgwrap">
-                                        <img class="combo-case" src="case4.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';">
-                                        <img class="combo-extra" src="img/p-4.png" alt="Incluye monitor" onerror="this.onerror=null;this.src='https://placehold.co/300x300/f9fafb/7c3aed?text=Monitor';">
+                                        <img class="combo-case" src="assets/img/combos/case4.webp" alt="Gabinete del combo" onerror="this.onerror=null;this.src='https://placehold.co/600x600/f9fafb/7c3aed?text=Gabinete';" loading="lazy" decoding="async">
+                                        <img class="combo-extra" src="assets/img/products/p-4.webp" alt="Incluye monitor" onerror="this.onerror=null;this.src='https://placehold.co/300x300/f9fafb/7c3aed?text=Monitor';" loading="lazy" decoding="async">
                                     </div>
                                     <ul class="combo-specs">
                                         <li>Monitor 24" 165Hz</li>
@@ -1579,12 +1465,12 @@
                 <p class="text-gray-500 text-sm mt-1 max-w-md">Los equipos y componentes preferidos por nuestra comunidad en zulia y toda Venezuela.</p>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 px-2 sm:px-0">
+            <div id="homeGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 px-2 sm:px-0">
                 <!-- Product 1 -->
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Tarjetas de Video">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-1.png" alt="Tarjeta Gráfica RTX 4070" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-1.webp" alt="Tarjeta Gráfica RTX 4070" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Top Ventas</span>
                         </div>
                         <h4 class="product-name">Tarjeta Gráfica NVIDIA GeForce RTX 4070 Super 12GB GDDR6X Gaming</h4>
@@ -1602,7 +1488,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Procesadores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-2.png" alt="Procesador AMD Ryzen 7" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-2.webp" alt="Procesador AMD Ryzen 7" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Destacado</span>
                         </div>
                         <h4 class="product-name">Procesador AMD Ryzen 7 7800X3D de 8 Núcleos 16 Hilos hasta 5.0GHz AM5</h4>
@@ -1620,7 +1506,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Teclados">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-3.png" alt="Teclado Mecánico RGB Pro" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-3.webp" alt="Teclado Mecánico RGB Pro" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Popular</span>
                         </div>
                         <h4 class="product-name">Teclado Mecánico Gamer RGB Pro con Switches Red Hot-Swap y RGB por Tecla</h4>
@@ -1638,7 +1524,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Computadoras" data-subcat="Monitores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-4.png" alt="Monitor Gamer Curvo 27" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-4.webp" alt="Monitor Gamer Curvo 27" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Oferta</span>
                         </div>
                         <h4 class="product-name">Monitor Gamer Curvo 27" Samsung Odyssey G5 180Hz QHD 2560x1440 1ms FreeSync Premium</h4>
@@ -1656,7 +1542,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Audífonos">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-5.png" alt="Audífonos Gamer 7.1" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-5.webp" alt="Audífonos Gamer 7.1" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                             <span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow">Nuevo</span>
                         </div>
                         <h4 class="product-name">Audífonos Gamer 7.1 Surround</h4>
@@ -1674,7 +1560,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Tarjetas de Video">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg/500px-ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg" alt="RTX 4060 Ti" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/9/96/ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg/500px-ZOTAC_Gaming%27s_GeForce_RTX_50_Series_Graphics_Carda.jpg" alt="RTX 4060 Ti" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Tarjeta Gráfica NVIDIA GeForce RTX 4060 Ti 8GB GDDR6 con DLSS 3 y Ray Tracing</h4>
                         <p class="product-sub">8GB GDDR6 DLSS 3</p>
@@ -1689,7 +1575,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Procesadores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-7.png" alt="Core i7-14700K" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-7.webp" alt="Core i7-14700K" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Procesador Intel Core i7-14700K de 20 Núcleos hasta 5.6GHz Socket LGA1700</h4>
                         <p class="product-sub">LGA1700 20 Nucleos 5.6GHz</p>
@@ -1704,7 +1590,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Tarjetas Madre Intel">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-8.png" alt="Z790 Motherboard" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-8.webp" alt="Z790 Motherboard" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Tarjeta Madre ASUS ROG Strix Z790-A Gaming WiFi DDR5 LGA1700 con Wi-Fi 6E</h4>
                         <p class="product-sub">DDR5 Wi-Fi 6E LGA1700</p>
@@ -1719,7 +1605,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Memorias Ram DDR5">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-9.avif" alt="RAM 32GB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-9.webp" alt="RAM 32GB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Memoria RAM Corsair Vengeance RGB 32GB DDR5 6000MHz CL30 Kit 2x16GB</h4>
                         <p class="product-sub">Kit 2x16GB 6000MHz CL30</p>
@@ -1734,7 +1620,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="SSD M.2">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg/500px-Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg" alt="SSD 2TB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg/500px-Samsung_980_PRO_PCIe_4.0_NVMe_SSD_1TB-top_PNr%C2%B00915.jpg" alt="SSD 2TB" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">SSD M.2 NVMe Samsung 990 PRO 2TB PCIe 4.0 Lectura hasta 7450 MB/s</h4>
                         <p class="product-sub">Lectura hasta 7450 MB/s</p>
@@ -1749,7 +1635,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Fuentes de Poder">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-11.png" alt="PSU 850W" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-11.webp" alt="PSU 850W" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Fuente de Poder Corsair RM850x 850W 80 Plus Gold Totalmente Modular</h4>
                         <p class="product-sub">80 Plus Gold Modular</p>
@@ -1764,7 +1650,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Cases">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-12.png" alt="Case Lian Li" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-12.webp" alt="Case Lian Li" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Gabinete Lian Li O11 Dynamic EVO con Vidrio Templado Dual Chamber</h4>
                         <p class="product-sub">Vidrio Templado Dual Chamber</p>
@@ -1779,7 +1665,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Componentes" data-subcat="Enfriamiento">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-13.webp" alt="Enfriamiento Líquido" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-13.webp" alt="Enfriamiento Líquido" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Refrigeración Líquida NZXT Kraken 360 RGB AIO para Procesador</h4>
                         <p class="product-sub">RGB AIO Liquid Cooler</p>
@@ -1794,7 +1680,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Mouses">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-14.png" alt="Mouse Superlight" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-14.webp" alt="Mouse Superlight" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Mouse Inalámbrico Logitech G Pro X Superlight 2 de 63g con Sensor HERO</h4>
                         <p class="product-sub">Mouse Inalámbrico 63g</p>
@@ -1809,7 +1695,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Sillas Gamer">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-15.png" alt="Silla Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-15.webp" alt="Silla Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Silla Gamer Secretlab Titan Evo Ergonómica en Cuero PU Talla Regular</h4>
                         <p class="product-sub">Ergonómica Cuero PU</p>
@@ -1824,7 +1710,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Laptops" data-subcat="Laptops">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-16.png" alt="Laptop Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-16.webp" alt="Laptop Gamer" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Laptop Gamer ASUS ROG Strix G16 Intel Core i7 RTX 4060 Pantalla 16" 240Hz</h4>
                         <p class="product-sub">i7 RTX 4060 16" 240Hz</p>
@@ -1839,7 +1725,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Computadoras" data-subcat="Monitores">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-17.avif" alt="Monitor 24" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-17.webp" alt="Monitor 24" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Monitor Gamer 24" AOC 24G2SPE 165Hz IPS FHD 1920x1080 1ms FreeSync</h4>
                         <p class="product-sub">FHD 1ms FreeSync</p>
@@ -1854,7 +1740,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Micrófonos">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg/500px-Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg" alt="QuadCast S" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg/500px-Blue_Yeti_Blackout_USB_microphone_%2851844234538%29.jpg" alt="QuadCast S" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Micrófono HyperX QuadCast S USB Condensador con RGB y Antipop</h4>
                         <p class="product-sub">USB Condensador RGB</p>
@@ -1869,7 +1755,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Controles/Volantes">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-19.png" alt="Control Xbox" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-19.webp" alt="Control Xbox" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Control Inalámbrico Microsoft Xbox Series X Carbon Black para PC y Consola</h4>
                         <p class="product-sub">Carbon Black PC / Console</p>
@@ -1884,7 +1770,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Impresión" data-subcat="Router y Mesh">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-20.png" alt="Router WiFi 6" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-20.webp" alt="Router WiFi 6" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Router ASUS RT-AX82U WiFi 6 Gaming con Iluminación AURA RGB</h4>
                         <p class="product-sub">Gaming Router AURA RGB</p>
@@ -1899,7 +1785,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Computadoras" data-subcat="UPS / Respaldo Eléctrico">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-21.png" alt="UPS 1500VA" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-21.webp" alt="UPS 1500VA" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">UPS APC Back-UPS 1500VA de Respaldo Eléctrico Automático con Regulación</h4>
                         <p class="product-sub">Respaldo Eléctrico Automático</p>
@@ -1914,7 +1800,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Periféricos" data-subcat="Webcam">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-22.png" alt="Webcam C920" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-22.webp" alt="Webcam C920" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Cámara Web Logitech C920 HD Pro 1080p con Micrófono Estéreo</h4>
                         <p class="product-sub">1080p Streaming & Calls</p>
@@ -1929,7 +1815,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Impresión" data-subcat="Impresoras">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-23.png" alt="Impresora EcoTank" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-23.webp" alt="Impresora EcoTank" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Impresora Epson EcoTank L3250 Multifuncional WiFi con Botellas de Tinta</h4>
                         <p class="product-sub">Multifuncional WiFi Botellas</p>
@@ -1944,7 +1830,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Impresión" data-subcat="Accesorios">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="https://live.staticflickr.com/688/33264146426_fde684e26e_b.jpg" alt="Kit iFixit" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="https://live.staticflickr.com/688/33264146426_fde684e26e_b.jpg" alt="Kit iFixit" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Kit de Herramientas iFixit Pro Tech Toolkit para Reparación de PCs y Laptops</h4>
                         <p class="product-sub">Reparación PCs y Laptops</p>
@@ -1959,7 +1845,7 @@
                 <div class="product-card p-3 sm:p-5 flex flex-col justify-between relative group" data-cat="Laptops" data-subcat="Accesorios">
                     <div class="relative z-10">
                         <div class="w-full h-32 sm:h-44 bg-gray-50 rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
-                            <img src="img/p-25.png" alt="Base Cooling" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300">
+                            <img src="assets/img/products/p-25.webp" alt="Base Cooling" class="w-full h-full object-contain p-3 group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async">
                         </div>
                         <h4 class="product-name">Base Refrigerante para Laptop RGB 17" con Ventiladores Silenciosos</h4>
                         <p class="product-sub">Ventiladores Silenciosos 17"</p>
@@ -2083,9 +1969,9 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
                     Contacto
                 </h4>
-                <p class="text-xs text-gray-500 mb-2">zulia, Venezuela</p>
-                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
-                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold">+58 (212) 555-GIGA</span></p>
+                <p class="text-xs text-gray-500 mb-2" data-gh="address">zulia, Venezuela</p>
+                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" data-gh="email" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
+                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold" data-gh="phone">+58 (212) 555-GIGA</span></p>
             </div>
         </div>
         <div class="max-w-7xl mx-auto pt-6 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400">
@@ -2233,7 +2119,7 @@
 
             <div class="pm-grid">
                 <div class="pm-media">
-                    <img id="pmImg" alt="">
+                    <img id="pmImg" alt="" loading="lazy" decoding="async">
                     <span class="pm-badge" id="pmBadge" hidden></span>
                 </div>
 
@@ -2337,8 +2223,8 @@
                 </nav>
                 <div class="pm-grid">
                     <div class="pm-media">
-                        <img id="cmImg" alt="">
-                        <img id="cmExtra" class="cm-media-extra" alt="Incluye monitor" hidden>
+                        <img id="cmImg" alt="" loading="lazy" decoding="async">
+                        <img id="cmExtra" class="cm-media-extra" alt="Incluye monitor" hidden loading="lazy" decoding="async">
                         <span class="pm-badge">Combo</span>
                     </div>
                     <div class="pm-info">
@@ -2511,15 +2397,15 @@
         });
 
         let sfxEnabled = true;
-        const sfxPop = new Audio('Sonido/pop.mp3');
+        const sfxPop = new Audio('assets/audio/pop.mp3');
         sfxPop.volume = 0.45;
         const sfxHoverSrcs = [
-            'Sonido/danevaer-mechanical-keyboard-typing-brow.wav',
-            'Sonido/danevaer-mechanical-keyboard-typing-brow(1).wav',
-            'Sonido/danevaer-mechanical-keyboard-typing-brow(2).wav',
-            'Sonido/danevaer-mechanical-keyboard-typing-brow(3).wav',
-            'Sonido/danevaer-mechanical-keyboard-typing-brow(4).wav',
-            'Sonido/danevaer-mechanical-keyboard-typing-brown-switches-436103_[cut_0sec].mp3'
+            'assets/audio/danevaer-mechanical-keyboard-typing-brow.wav',
+            'assets/audio/danevaer-mechanical-keyboard-typing-brow(1).wav',
+            'assets/audio/danevaer-mechanical-keyboard-typing-brow(2).wav',
+            'assets/audio/danevaer-mechanical-keyboard-typing-brow(3).wav',
+            'assets/audio/danevaer-mechanical-keyboard-typing-brow(4).wav',
+            'assets/audio/danevaer-mechanical-keyboard-typing-brown-switches-436103_[cut_0sec].mp3'
         ];
         function playPop() {
             if (!sfxEnabled) return;
@@ -2549,7 +2435,7 @@
             }
         });
 
-        const navLinkSel = 'nav a[href^="#"], nav a[href^="catalogo"], nav a[href^="contacto"], .md-links a, .nav-dd-cat';
+        const navLinkSel = 'nav a[href^="#"], nav a[href^="catalogo"], nav a[href^="contacto"], .md-links a';
         document.querySelectorAll(navLinkSel).forEach(el => {
             el.addEventListener('mouseenter', playHover);
         });
@@ -3109,9 +2995,19 @@
             function shareLinks() {
                 const base = location.href.split('#')[0];
                 const url = encodeURIComponent(base + '#' + encodeURIComponent(current.name));
-                const text = encodeURIComponent(current.name + ' — ' + current.sub + ' | MANIAWORLD');
+                const store = (window.GigaData && GigaData.store) ? GigaData.store() : {};
+                const DEFAULT_TPL = '{name} — {sub} | {storeName}';
+                const tpl = (store.shareTemplate && store.shareTemplate.trim()) ? store.shareTemplate : DEFAULT_TPL;
+                const raw = window.ghTemplate ? ghTemplate(tpl, {
+                    storeName: store.name || 'MANIAWORLD',
+                    name: current.name,
+                    sub: current.sub,
+                    url: base
+                }) : (current.name + ' — ' + current.sub + ' | MANIAWORLD');
+                const text = encodeURIComponent(raw);
+                const waBase = window.waLink ? waLink(store.whatsapp || '', raw) : ('https://wa.me/?text=' + text);
                 return {
-                    whatsapp: 'https://wa.me/?text=' + text + '%20' + url,
+                    whatsapp: waBase + '%20' + url,
                     facebook: 'https://www.facebook.com/sharer/sharer.php?u=' + url,
                     x: 'https://twitter.com/intent/tweet?text=' + text + '&url=' + url,
                     telegram: 'https://t.me/share/url?url=' + url + '&text=' + text
@@ -3262,115 +3158,6 @@
         })();
     </script>
     <script>
-        (function () {
-            const DATA = [
-                { name: 'Laptops', groups: [
-                    { t: '🔍 Explora por Componente', items: ['Laptops Gamer y Oficina', 'Mini PC', 'Tablets', 'Equipos Repotenciados'] },
-                    { t: '💡 Te Puede Interesar', items: ['Maletines y Bolsos', 'Cargadores', 'Soportes para Laptop', 'Discos Externos'] }
-                ]},
-                { name: 'Computadoras', groups: [
-                    { t: '🔍 Explora por Componente', items: ['Monitores', 'Proyectores y Pantallas', 'Tabletas Gráficas', 'Webcams'] },
-                    { t: '💡 Te Puede Interesar', items: ['Soportes de Monitor', 'Cables y Adaptadores', 'UPS / Respaldo Eléctrico', 'Cámaras de Seguridad'] }
-                ]},
-                { name: 'Componentes', groups: [
-                    { t: '🔍 Explora por Componente', items: ['Procesadores', 'Tarjetas de Video', 'Tarjetas Madre', 'Discos SSD y RAM'] },
-                    { t: '💡 Te Puede Interesar', items: ['Fuentes de Poder', 'Case / Gabinetes', 'Refrigeración / Enfriamiento', 'Pastas Térmicas y Pads'] }
-                ]},
-                { name: 'Periféricos', groups: [
-                    { t: '🔍 Explora por Componente', items: ['Teclados y Mouses', 'Audífonos y Micrófonos', 'Controles y Volantes', 'Keycaps y Mouse Pads'] },
-                    { t: '💡 Te Puede Interesar', items: ['Sillas Gamer', 'Mesas / Escritorios Gamer', 'Grabación y Podcast', 'Audio General'] }
-                ]},
-                { name: 'Impresión', groups: [
-                    { t: '🔍 Explora por Componente', items: ['Impresoras', 'Tintas y Tóner', 'Letreros LED y Lámparas', 'Soportes'] },
-                    { t: '💡 Te Puede Interesar', items: ['Redes y Router Mesh', 'Accesorios', 'Gift Cards y Licencias', 'Cables de Conexión'] }
-                ]}
-            ];
-
-            const dd = document.getElementById('navDropdown');
-            const trigger = document.getElementById('navProductos');
-            const catsEl = document.getElementById('navDDCats');
-            const contentEl = document.getElementById('navDDContent');
-            const CHEVRON = '<svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>';
-
-            let active = DATA[0].name;
-            let closeTimer = null;
-
-            function renderCats() {
-                catsEl.innerHTML = DATA.map(c =>
-                    '<button type="button" class="nav-dd-cat' + (c.name === active ? ' is-active' : '') + '" data-cat="' + c.name + '" role="menuitem">' +
-                    '<span>' + c.name + '</span>' + CHEVRON + '</button>'
-                ).join('');
-            }
-
-            function renderContent() {
-                const cat = DATA.find(d => d.name === active);
-                contentEl.innerHTML = '<div class="nav-dd-groups">' + cat.groups.map(g =>
-                    '<div class="nav-dd-group">' +
-                        '<div class="nav-group-title">' + g.t + '</div>' +
-                        '<div class="nav-group-items">' + g.items.map(i =>
-                            '<a class="nav-item" href="catalogo.html">' + i + '</a>'
-                        ).join('') + '</div>' +
-                    '</div>'
-                ).join('') + '</div>';
-            }
-
-            function setActive(name) {
-                if (name === active) return;
-                active = name;
-                renderCats();
-                renderContent();
-            }
-
-            function open() {
-                clearTimeout(closeTimer);
-                dd.classList.add('is-open');
-                trigger.setAttribute('aria-expanded', 'true');
-            }
-
-            function close() {
-                dd.classList.remove('is-open');
-                trigger.setAttribute('aria-expanded', 'false');
-            }
-
-            function scheduleClose() {
-                clearTimeout(closeTimer);
-                closeTimer = setTimeout(close, 140);
-            }
-
-            trigger.addEventListener('mouseenter', open);
-            trigger.addEventListener('mouseleave', scheduleClose);
-            trigger.addEventListener('click', e => {
-                e.preventDefault();
-                location.href = 'catalogo.html';
-            });
-
-            dd.addEventListener('mouseenter', () => clearTimeout(closeTimer));
-            dd.addEventListener('mouseleave', scheduleClose);
-
-            catsEl.addEventListener('mouseover', e => {
-                const btn = e.target.closest('.nav-dd-cat');
-                if (btn) setActive(btn.dataset.cat);
-            });
-            catsEl.addEventListener('click', e => {
-                const btn = e.target.closest('.nav-dd-cat');
-                if (btn) setActive(btn.dataset.cat);
-            });
-            contentEl.addEventListener('click', e => {
-                if (e.target.closest('.nav-item')) close();
-            });
-
-            document.addEventListener('keydown', e => {
-                if (e.key === 'Escape') close();
-            });
-            document.addEventListener('click', e => {
-                if (!e.target.closest('#navDropdown') && !e.target.closest('#navProductos')) close();
-            });
-
-            renderCats();
-            renderContent();
-        })();
-    </script>
-    <script>
         document.querySelectorAll('.faq-head').forEach(head => {
             head.addEventListener('click', () => {
                 const item = head.parentElement;
@@ -3391,7 +3178,7 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>
     </button>
 
-    <script src="cart.js"></script>
+    <script src="assets/js/cart.js"></script>
     <script>
         (function () {
             const badge = document.getElementById('cartCount');
@@ -3433,7 +3220,7 @@
                 cdList.innerHTML = items.map(item => {
                     const id = encodeURIComponent(item.id);
                     return '<div class="cd-item">' +
-                        (item.img ? '<img class="cd-thumb" src="' + esc(item.img) + '" alt="">' : '<div class="cd-thumb"></div>') +
+                        (item.img ? '<img class="cd-thumb" src="' + esc(item.img) + '" alt="" loading="lazy" decoding="async">' : '<div class="cd-thumb"></div>') +
                         '<div class="cd-main">' +
                             '<div class="cd-name">' + esc(item.name) + '</div>' +
                             '<div class="cd-unit">' + fmt(item.price) + ' c/u</div>' +
@@ -3545,9 +3332,9 @@
             menu.querySelectorAll('.md-links a').forEach(a => a.addEventListener('click', shut));
         })();
     </script>
-    <script src="categorias.js"></script>
-    <script src="bottomnav.js"></script>
-    <script src="transition.js"></script>
+    <script src="assets/js/categorias.js"></script>
+    <script src="assets/js/bottomnav.js"></script>
+    <script src="assets/js/transition.js"></script>
     <script>
         (function () {
             var slider = document.querySelector('.combo-slider');
@@ -3614,7 +3401,7 @@
                 },
                 'Combo Ryzen 7 Pro': {
                     sub: 'Máximo rendimiento en 1440p/4K. Incluye monitor.',
-                    extra: 'img/p-4.png',
+                    extra: 'assets/img/products/p-4.webp',
                     includes: ['Gabinete Gamer', 'Procesador AMD Ryzen 7 - 7800X3D', 'Tarjeta madre AM5', 'Memoria 32GB DDR5', 'Almacenamiento 1TB SSD M.2', 'Gráfica RTX 4070 Super', 'Fuente de poder 850W 80+ Gold', 'Refrigeración líquida AIO', 'Monitor 24" 165Hz']
                 }
             };
@@ -3749,5 +3536,7 @@
             update();
         })();
     </script>
+    <!-- Datos dinamicos (Supabase): config/sb/data ya cargados en <head> -->
+    <script src="assets/js/store.js"></script>
 </body>
 </html>

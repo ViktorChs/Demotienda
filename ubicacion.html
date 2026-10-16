@@ -3,10 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://isnbkqgzncjgttijzlmo.supabase.co">
     <title>Ubicación - MANIAWORLD</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="theme.js"></script>
-    <link rel="stylesheet" href="dark.css">
+    <script src="assets/js/theme.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/sb.js"></script>
+<script src="assets/js/data.js"></script>
+    <link rel="stylesheet" href="assets/css/dark.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css" rel="stylesheet">
     <style>
@@ -148,7 +155,7 @@
 
     <!-- Page loader -->
     <div id="pageLoader" class="pl" aria-hidden="true">
-        <img src="logo2.png" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'">
+        <img src="assets/img/logos/logo2.webp" alt="MANIAWORLD" class="pl-logo" onerror="this.src='https://placehold.co/400x400/ffffff/7c3aed?text=GigaHertz'" loading="eager" decoding="async">
         <div class="pl-ring"></div>
     </div>
     <script>
@@ -226,7 +233,7 @@
                         <div>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-purple-600 mb-1 inline-block">Casa Matriz</span>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">Sucursal Centro</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">zulia, Venezuela<br>Atención presencial con cita previa</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="address">zulia, Venezuela</span><br>Atención presencial con cita previa</p>
                         </div>
                     </div>
 
@@ -236,7 +243,7 @@
                         </div>
                         <div>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">Teléfono</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">+58 (212) 555-GIGA<br>Lunes a sábado, 9:00 am – 6:00 pm</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="phone">+58 (212) 555-GIGA</span><br><span data-gh="hours">Lunes a sábado, 9:00 am – 6:00 pm</span></p>
                         </div>
                     </div>
 
@@ -246,7 +253,7 @@
                         </div>
                         <div>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">Correo</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">soporte@gigahertzstore.com<br>Respuesta en menos de 24 horas hábiles</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="email">soporte@gigahertzstore.com</span><br>Respuesta en menos de 24 horas hábiles</p>
                         </div>
                     </div>
 
@@ -256,7 +263,7 @@
                         </div>
                         <div>
                             <h3 class="text-gray-900 font-bold text-sm mb-1">WhatsApp</h3>
-                            <p class="text-gray-500 text-xs leading-relaxed">+58 (424) 555-GIGA<br>Soporte rápido y cotizaciones</p>
+                            <p class="text-gray-500 text-xs leading-relaxed"><span data-gh="whatsapp">+58 (424) 555-GIGA</span><br>Soporte rápido y cotizaciones</p>
                         </div>
                     </div>
                 </section>
@@ -326,9 +333,9 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
                     Contacto
                 </h4>
-                <p class="text-xs text-gray-500 mb-2">zulia, Venezuela</p>
-                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
-                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold">+58 (212) 555-GIGA</span></p>
+                <p class="text-xs text-gray-500 mb-2" data-gh="address">zulia, Venezuela</p>
+                <p class="text-xs text-gray-500 mb-2">Email: <a href="contacto.html" data-gh="email" class="text-purple-600 font-semibold hover:text-purple-700 transition-colors">soporte@gigahertzstore.com</a></p>
+                <p class="text-xs text-gray-500">Teléfono: <span class="text-purple-600 font-semibold" data-gh="phone">+58 (212) 555-GIGA</span></p>
             </div>
         </div>
         <div class="max-w-7xl mx-auto pt-6 border-t border-purple-100 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400">
@@ -397,10 +404,13 @@
             let marker;
             map.on('load', () => {
                 wrap.classList.add('is-ready');
+                const s = (window.GigaData && GigaData.store) ? GigaData.store() : {};
+                const nm = String(s.name || 'MANIAWORLD').replace(/</g, '&lt;');
+                const ad = String(s.address || 'Zulia, Venezuela').replace(/</g, '&lt;');
                 marker = new maplibregl.Marker({ color: '#7c3aed' })
                     .setLngLat(storeCoord)
                     .setPopup(new maplibregl.Popup({ offset: 25 })
-                        .setHTML('<strong>MANIAWORLD</strong><br>zulia, Venezuela<br>Atención con cita previa'))
+                        .setHTML('<strong>' + nm + '</strong><br>' + ad + '<br>Atención con cita previa'))
                     .addTo(map);
                 marker.togglePopup();
             });
@@ -412,7 +422,9 @@
             });
         })();
     </script>
-    <script src="categorias.js"></script>
-    <script src="bottomnav.js"></script>
+    <script src="assets/js/categorias.js"></script>
+    <script src="assets/js/bottomnav.js"></script>
+    <!-- Datos dinamicos (Supabase): config/sb/data ya cargados en <head> -->
+    <script src="assets/js/store.js"></script>
 </body>
 </html>
