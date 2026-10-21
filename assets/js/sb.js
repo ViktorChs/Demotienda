@@ -14,17 +14,40 @@
   var BUCKET = cfg.STORAGE_BUCKET || 'images';
   var SESSION_KEY = 'gh_admin_session';
 
+  // Vigencia de la sesion del panel (ms). Configurable desde config.js:
+  //   window.GIGA_CONFIG.SESSION = { idleMs: 30*60*1000, maxMs: 12*60*60*1000 }
+  // idleMs: sin actividad del usuario. maxMs: tope absoluto desde el login.
+  var SEC = {
+    idleMs: Number((cfg.SESSION && cfg.SESSION.idleMs) || 30 * 60 * 1000),
+    maxMs: Number((cfg.SESSION && cfg.SESSION.maxMs) || 12 * 60 * 60 * 1000)
+  };
+
+  // Tablas/funciones siempre se pasan como literales en el codigo. Este
+  // guardia lo garantiza: nada raro puede llegar a la URL de PostgREST.
+  var SAFE_IDENT = /^[a-z_][a-z0-9_]*$/i;
+  function ident(name) {
+    if (typeof name !== 'string' || !SAFE_IDENT.test(name)) {
+      throw new Error('Identificador no válido: ' + name);
+    }
+    return name;
+  }
+
   function isConfigured() {
     return BASE.indexOf('http') === 0 && KEY && KEY.indexOf('TU_') !== 0;
   }
 
+  function nowMs() { return Date.now(); }
+
   function getSession() {
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
+    var s;
+    try { s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
     catch (e) { return null; }
+    if (!s || typeof s !== 'object' || typeof s.access_token !== 'string' || !s.access_token) return null;
+    return s;
   }
   function setSession(s) {
-    if (s) localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-    else localStorage.removeItem(SESSION_KEY);
+    if (!s) { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} return; }
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {}
   }
   function token() {
     var s = getSession();
@@ -37,41 +60,87 @@
     };
   }
 
+  // ---- Vigencia de la sesion ----
+  function touchSession() {
+    var s = getSession();
+    if (!s) return null;
+    s.last_activity = nowMs();
+    if (!s.issued_at) s.issued_at = s.last_activity;
+    setSession(s);
+    return s;
+  }
+  // Restante (ms) hasta el limite que ocurra primero. limit: 'idle' | 'abs'.
+  function sessionRemaining() {
+    var s = getSession();
+    if (!s) return { idle: 0, abs: 0, min: 0, limit: 'idle' };
+    var t = nowMs();
+    var last = s.last_activity || s.issued_at || t;
+    var since = s.issued_at || last;
+    var idle = SEC.idleMs - (t - last);
+    var abs = SEC.maxMs - (t - since);
+    return { idle: idle, abs: abs, min: Math.min(idle, abs), limit: idle <= abs ? 'idle' : 'abs' };
+  }
+  // Si vencio (inactividad o tope), borra la sesion y devuelve true.
+  function expireIfStale() {
+    var s = getSession();
+    if (!s) return false;
+    if (sessionRemaining().min <= 0) { setSession(null); return true; }
+    return false;
+  }
+  // Sesion invalidada por el servidor (token revocado/expirado).
+  function handleUnauthorized() {
+    if (getSession()) setSession(null);
+    try { window.dispatchEvent(new CustomEvent('giga:unauthorized')); } catch (e) {}
+  }
+
   // Renueva el access_token antes de que caduque (sesion de 1h).
   // Si falla, se devuelve la sesion tal cual: el 401 lo reportara el request.
   function refreshSession() {
     var s = getSession();
     if (!s || !s.refresh_token) return Promise.resolve(s);
+    if (expireIfStale()) return Promise.resolve(null);
     return fetch(BASE + '/auth/v1/token?grant_type=refresh_token', {
       method: 'POST',
       headers: { apikey: KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: s.refresh_token })
     }).then(function (res) {
-      if (!res.ok) return s;
+      if (!res.ok) {
+        // El refresh_token ya no sirve (revocado o reusado): fuera.
+        if (res.status === 400 || res.status === 401 || res.status === 403) handleUnauthorized();
+        return getSession();
+      }
       return res.json().then(function (data) {
+        if (!getSession()) return null; // se cerró sesión en otra pestaña
         var ns = {
           access_token: data.access_token || s.access_token,
           refresh_token: data.refresh_token || s.refresh_token,
-          expires_at: Date.now() + (data.expires_in ? data.expires_in * 1000 : 3600000),
+          expires_at: nowMs() + (data.expires_in ? data.expires_in * 1000 : 3600000),
+          issued_at: s.issued_at || nowMs(),
+          last_activity: nowMs(),
           user: data.user || s.user
         };
         setSession(ns);
         return ns;
       });
-    }).catch(function () { return s; });
+    }).catch(function () { return getSession(); });
   }
 
   function ensureFresh() {
+    if (expireIfStale()) return Promise.resolve(null);
     var s = getSession();
     if (!s || !s.access_token) return Promise.resolve(s);
-    if (!s.expires_at || s.expires_at - Date.now() > 60000) return Promise.resolve(s);
+    if (!s.expires_at || s.expires_at - nowMs() > 60000) return Promise.resolve(s);
     return refreshSession();
   }
 
   // ---- REST ----
   function qs(params) {
     if (!params) return '';
-    if (typeof params === 'string') return params ? (params.charAt(0) === '?' ? params : '?' + params) : '';
+    if (typeof params === 'string') {
+      var raw = params.charAt(0) === '?' ? params.slice(1) : params;
+      if (/[#\r\n]/.test(raw)) throw new Error('Parámetros no válidos');
+      return raw ? '?' + raw : '';
+    }
     var p = new URLSearchParams();
     Object.keys(params).forEach(function (k) {
       if (params[k] !== undefined && params[k] !== null) p.append(k, params[k]);
@@ -96,6 +165,7 @@
           var data = null;
           try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
           if (!res.ok) {
+            if (res.status === 401) handleUnauthorized();
             var msg = (data && (data.message || data.error_description || data.error || data.hint)) || res.statusText;
             var err = new Error(msg || ('HTTP ' + res.status));
             err.status = res.status;
@@ -109,26 +179,26 @@
   }
 
   function get(table, params) {
-    return request('GET', '/rest/v1/' + table + qs(params));
+    return request('GET', '/rest/v1/' + ident(table) + qs(params));
   }
   function insert(table, rows) {
-    return request('POST', '/rest/v1/' + table, rows, { Prefer: 'return=representation' });
+    return request('POST', '/rest/v1/' + ident(table), rows, { Prefer: 'return=representation' });
   }
   function update(table, match, patch) {
-    return request('PATCH', '/rest/v1/' + table + qs(match), patch, { Prefer: 'return=representation' });
+    return request('PATCH', '/rest/v1/' + ident(table) + qs(match), patch, { Prefer: 'return=representation' });
   }
   function remove(table, match) {
-    return request('DELETE', '/rest/v1/' + table + qs(match), undefined, { Prefer: 'return=representation' });
+    return request('DELETE', '/rest/v1/' + ident(table) + qs(match), undefined, { Prefer: 'return=representation' });
   }
   // insert-or-update por columna unica (merge-duplicates)
   function upsert(table, rows, onConflict) {
     var extra = { Prefer: 'resolution=merge-duplicates,return=representation' };
-    var path = '/rest/v1/' + table + (onConflict ? ('?on_conflict=' + onConflict) : '');
+    var path = '/rest/v1/' + ident(table) + (onConflict ? ('?on_conflict=' + encodeURIComponent(onConflict)) : '');
     return request('POST', path, rows, extra);
   }
   // llama una funcion RPC de Postgres (p.ej. create_order)
   function rpc(fn, args) {
-    return request('POST', '/rest/v1/rpc/' + fn, args || {});
+    return request('POST', '/rest/v1/rpc/' + ident(fn), args || {});
   }
 
   // ---- Auth ----
@@ -146,7 +216,9 @@
         var session = {
           access_token: data.access_token,
           refresh_token: data.refresh_token,
-          expires_at: Date.now() + (data.expires_in ? data.expires_in * 1000 : 3600000),
+          expires_at: nowMs() + (data.expires_in ? data.expires_in * 1000 : 3600000),
+          issued_at: nowMs(),
+          last_activity: nowMs(),
           user: data.user
         };
         setSession(session);
@@ -189,7 +261,8 @@
   function isLoggedIn() {
     var s = getSession();
     if (!s || !s.access_token) return false;
-    if (!s.expires_at || s.expires_at > Date.now()) return true;
+    if (sessionRemaining().min <= 0) { setSession(null); return false; }
+    if (!s.expires_at || s.expires_at > nowMs()) return true;
     // Caduco pero hay refresh_token: se renueva solo en el primer request.
     return !!s.refresh_token;
   }
@@ -289,6 +362,13 @@
   // piden al Worker (capa de cache en el borde, gratis).
   var CDN = String(cfg.IMAGE_CDN || '').replace(/\/+$/, '');
 
+  // Base de la carpeta assets/, calculada desde la URL real de este script
+  // (.../assets/js/sb.js -> .../assets/). Asi las rutas relativas de imagen
+  // funcionan sin importar si el sitio se sirve en la raiz o bajo un subpath
+  // (p. ej. /admin/index.html, /labs/x.html o /GIGAHEARTZ/admin/index.html).
+  var SCRIPT_SRC = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+  var ASSETS_BASE = SCRIPT_SRC ? SCRIPT_SRC.replace(/[^\/]*$/, '').replace(/js\/$/, '') : '';
+
   function cdnUrl(path) {
     var obj = String(path || '').replace(/^\/+/, '');
     var enc = obj.split('/').map(encodeURIComponent).join('/');
@@ -298,7 +378,13 @@
   function resolveImage(path) {
     if (!path) return '';
     if (/^(https?:|data:)/i.test(path)) return path;
-    if (/^(assets\/|\.\/|\/)/i.test(path)) return path.replace(/^\.\//, '');
+    // assets/... -> absoluta usando la base real del script (soporta subpath).
+    if (/^assets\//i.test(path)) {
+      var rel = path.replace(/^assets\//i, '');
+      return ASSETS_BASE ? ASSETS_BASE + rel : '/' + path;
+    }
+    if (/^\.\//.test(path)) return path.slice(2);
+    if (path.charAt(0) === '/') return path;
     if (CDN) return cdnUrl(path);
     return publicUrl(path);
   }
@@ -320,6 +406,11 @@
     isLoggedIn: isLoggedIn,
     getSession: getSession,
     refresh: refreshSession,
+    // Vigencia de sesión (usado por el panel para el aviso/cierre automático).
+    SESSION: SEC,
+    touch: touchSession,
+    remaining: sessionRemaining,
+    expireIfStale: expireIfStale,
     upload: upload,
     publicUrl: publicUrl,
     resolveImage: resolveImage,

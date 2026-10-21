@@ -88,6 +88,7 @@ create table if not exists public.products (
   images          jsonb not null default '[]'::jsonb,  -- galeria ordenada
   includes        jsonb not null default '[]'::jsonb,  -- lineas de texto extra del combo
   meta            jsonb not null default '{}'::jsonb,  -- extras: cpu_line1/cpu_line2/tag/extra_image
+  specs           jsonb not null default '[]'::jsonb,  -- filas {k,v} de "Especificaciones tecnicas" (vacio = seccion oculta)
   stock           int  default 1,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()

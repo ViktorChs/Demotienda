@@ -90,5 +90,50 @@
     return 'https://wa.me/' + digits + q;
   };
 
+  /* Horario del negocio: ¿esta abierta ahora?
+     Combina el interruptor maestro (store.open) con el horario semanal
+     (store.schedule = {mon:{c:bool,o:'HH:MM',x:'HH:MM'}, ...}).
+     Si no hay horario configurado, se respeta solo el interruptor maestro. */
+  var GH_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  function ghHM(s) { var m = /^(\d{1,2}):(\d{2})/.exec(String(s || '')); return m ? (Number(m[1]) * 60 + Number(m[2])) : null; }
+  window.ghStoreState = function (store) {
+    store = store || (D.settings && D.settings.store) || {};
+    var now = new Date();
+    var sch = store.schedule || null;
+    var st = { open: store.open !== false, manual: store.open !== false, schedule: sch, today: null, slot: null };
+    if (store.open === false) st.open = false;
+    if (sch) {
+      var dayKey = GH_DAYS[now.getDay()];
+      var d = sch[dayKey] || {};
+      var cur = now.getHours() * 60 + now.getMinutes();
+      var o = ghHM(d.o), x = ghHM(d.x);
+      st.today = { key: dayKey, closed: !!d.c, o: d.o || '', x: d.x || '' };
+      st.open = (store.open !== false) && !d.c && o != null && x != null && cur >= o && cur < x;
+    }
+    for (var i = 0; i < 7; i++) {
+      var dd = new Date(now); dd.setDate(now.getDate() + i);
+      var s = sch ? sch[GH_DAYS[dd.getDay()]] : null;
+      if (sch) { if (s && !s.c && ghHM(s.o) != null) { st.slot = { offset: i, o: s.o, x: s.x }; break; } }
+    }
+    if (!sch && store.hours) st.slot = { offset: 0, o: '', x: '', text: store.hours };
+    return st;
+  };
+  /* Texto del aviso de tienda cerrada (usa closedMessage o uno por defecto). */
+  window.ghClosedMessage = function (store, st) {
+    store = store || (D.settings && D.settings.store) || {};
+    st = st || window.ghStoreState(store);
+    var base = (store.closedMessage && String(store.closedMessage).trim()) || 'Estamos cerrados';
+    base = base.replace(/[.\s]+$/, '');
+    var when = '';
+    if (st && st.slot) {
+      if (st.slot.o && st.slot.x) when = st.slot.o + ' a ' + st.slot.x;
+      else if (st.slot.text) when = st.slot.text;
+    }
+    var parts = [base + '.'];
+    if (when) parts.push('Recibimos pedidos en horario laboral de ' + when + '.');
+    parts.push('\u00a1Con gusto puedes ver nuestros productos!');
+    return parts.join(' ');
+  };
+
   window.GigaData = D;
 })();

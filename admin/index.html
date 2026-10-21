@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<!-- CSP estricta del panel: sin scripts inline ni eval (el panel no los usa).
+     Se aplica junto a la de _headers; rige la más restrictiva. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data: blob: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://*.supabase.co https://*.workers.dev">
 <title>Panel · MANIAWORLD</title>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -19,6 +22,7 @@
     <label for="lgPass">Contraseña</label>
     <input id="lgPass" type="password" autocomplete="current-password" required placeholder="••••••">
     <div id="lgError" class="field help" style="color:var(--danger);display:none"></div>
+    <div id="lgLock" class="login-lock" hidden></div>
     <button class="btn primary" id="lgBtn" style="width:100%;margin-top:20px;justify-content:center">Entrar</button>
     <p class="hint">Si aún no tienes proyecto Supabase, edita <code>assets/js/config.js</code>.</p>
   </form>
@@ -48,6 +52,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
         <span>Ver tienda</span>
       </a>
+      <button class="nav-item" id="helpBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+        <span>Ayuda y atajos</span>
+      </button>
       <button class="nav-item" id="logoutBtn" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
         <span>Cerrar sesión</span>
@@ -70,12 +78,22 @@
     </header>
     <section class="view" id="view"></section>
   </div>
+
+  <!-- Barra inferior (solo teléfono): accesos rápidos + crear -->
+  <nav class="tabbar" id="tabbar" aria-label="Navegación rápida"></nav>
 </div>
 
 <!-- ================= MODAL / TOAST / PALETTE ================= -->
 <div id="modalRoot"></div>
 <div id="paletteRoot" hidden></div>
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Aviso de expiración de sesión (no bloquea el trabajo en curso) -->
+<div id="sessWarn" class="sess-warn" role="alertdialog" aria-live="assertive" hidden>
+  <span class="sess-warn-ico" id="sessWarnIco">⏳</span>
+  <span class="sess-warn-txt" id="sessWarnTxt"></span>
+  <button type="button" class="btn primary sm" id="sessStay">Seguir conectado</button>
+</div>
 
 <script src="../assets/js/config.js"></script>
 <script src="../assets/js/sb.js"></script>

@@ -148,6 +148,21 @@
     document.body.insertBefore(bar, document.body.firstChild);
   }
 
+  /* Aviso de tienda cerrada (fuera de horario o por interruptor maestro). */
+  function applyClosedBanner(store) {
+    if (document.getElementById('gh-closed-banner')) return;
+    if (!window.ghStoreState) return;
+    var st = window.ghStoreState(store);
+    window.GIGA_STORE_OPEN = st.open;
+    if (st.open) return;
+    var bar = document.createElement('div');
+    bar.id = 'gh-closed-banner';
+    bar.setAttribute('role', 'status');
+    bar.textContent = window.ghClosedMessage ? window.ghClosedMessage(store, st) : 'Estamos cerrados.';
+    bar.style.cssText = 'display:block;text-align:center;padding:9px 14px;font:600 13px/1.45 inherit;color:#fff;background:#b91c1c;position:relative;z-index:61';
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+
   function applyDecorations(deco) {
     var old = document.getElementById('gh-decor');
     if (old) old.remove();
@@ -317,6 +332,22 @@
     var l2 = card.querySelector('.combo-cpu-line2'); if (l2) l2.textContent = meta.cpu_line2 || '';
     var tag = card.querySelector('.combo-tag'); if (tag) tag.textContent = meta.tag || 'Combo';
     var img = card.querySelector('.combo-case'); if (img) img.src = imgSrc(c.image, 640);
+    card.dataset.img = imgSrc(meta.composite || c.image, 640);
+    var wrap = card.querySelector('.combo-imgwrap');
+    if (wrap) {
+      Array.prototype.slice.call(wrap.querySelectorAll('img.combo-layer')).forEach(function (x) { x.remove(); });
+      (meta.layers || []).forEach(function (L) {
+        if (!L || !L.src) return;
+        var im = document.createElement('img');
+        im.className = 'combo-layer';
+        im.alt = ''; im.loading = 'lazy'; im.decoding = 'async';
+        im.src = imgSrc(L.src, 320);
+        im.style.cssText = 'position:absolute;left:' + (Number(L.x) || 0) + '%;top:' + (Number(L.y) || 0) +
+          '%;width:' + (Number(L.w) || 40) + '%;height:auto;object-fit:contain;z-index:' + (Number(L.z) || 1) +
+          ';pointer-events:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.18))';
+        wrap.appendChild(im);
+      });
+    }
     var price = card.querySelector('.combo-price'); if (price) price.textContent = money(c.price);
     var ul = card.querySelector('.combo-specs');
     if (ul) {
@@ -423,7 +454,7 @@
   GD.ready.then(function (D) {
     D = D || {};
     var hasCfg = D.settings && Object.keys(D.settings).length;
-    if (hasCfg) { applyTheme(D.settings, D.themes || []); hydrateTexts(D.settings); }
+    if (hasCfg) { applyTheme(D.settings, D.themes || []); hydrateTexts(D.settings); applyClosedBanner(D.settings.store); }
 
     var products = D.products || [];
     if (!products.length) { window.dispatchEvent(new CustomEvent('gh:ready')); return; }

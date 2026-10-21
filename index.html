@@ -2872,19 +2872,32 @@
             const fmtUSD = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const fmtBS = v => 'Bs. ' + (v * RATE_BS).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+            const escHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const ghImg = u => (window.GigaSB && GigaSB.resolveImage) ? GigaSB.resolveImage(u, 800) : u;
+
             function readCard(card) {
                 const img = card.querySelector('img');
+                const h4 = card.querySelector('h4');
+                const subEl = card.querySelector('p');
                 const priceEl = [...card.querySelectorAll('span')].find(s => s.textContent.includes('$'));
                 const badgeEl = card.querySelector('span[class*="top-2"]');
+                const p = card.__gdata || null;
+                const gallery = ((p && p.images && p.images.length) ? p.images.filter(Boolean)
+                    : (p && p.image ? [p.image] : (img && img.getAttribute('src') ? [img.getAttribute('src')] : [])))
+                    .map(ghImg);
                 return {
-                    name: card.querySelector('h4').textContent.trim(),
-                    sub: card.querySelector('p').textContent.trim(),
-                    img: img ? img.getAttribute('src') : '',
+                    name: (p && p.name) || (h4 ? h4.textContent.trim() : ''),
+                    sub: (p && p.sub) || (subEl ? subEl.textContent.trim() : ''),
+                    img: gallery[0] || '',
+                    gallery: gallery,
                     alt: img ? img.getAttribute('alt') : '',
-                    usd: priceEl ? parseFloat(priceEl.textContent.replace(/[^0-9.]/g, '')) : 0,
-                    badge: badgeEl ? badgeEl.textContent.trim() : '',
-                    cat: (card.dataset.cat || '').trim(),
-                    subcat: (card.dataset.subcat || '').trim()
+                    usd: p && p.price != null ? Number(p.price) : (priceEl ? parseFloat(priceEl.textContent.replace(/[^0-9.]/g, '')) : 0),
+                    original: p && p.original_price ? Number(p.original_price) : 0,
+                    desc: (p && p.description) ? p.description : '',
+                    specs: (p && Array.isArray(p.specs)) ? p.specs : [],
+                    badge: (p && p.badge) || (badgeEl ? badgeEl.textContent.trim() : ''),
+                    cat: (p && p.category_name) || (card.dataset.cat || '').trim(),
+                    subcat: (p && p.subcategory_name) || (card.dataset.subcat || '').trim()
                 };
             }
 
@@ -2928,20 +2941,24 @@
                 } else {
                     pmBadge.hidden = true;
                 }
-                pmDescText.innerHTML =
-                    '<p><strong>' + current.name + '</strong> — ' + current.sub + '. Seleccionado por el equipo técnico de MANIAWORLD y probado en banco de pruebas antes de salir a la venta, garantizando rendimiento estable, temperaturas controladas y compatibilidad verificada con los estándares actuales de la industria.</p>' +
-                    '<p>El producto se entrega nuevo y sellado de fábrica, con su empaque original, manuales, accesorios completos y certificados de cumplimiento. Incluye garantía de 12 meses por fallas de fabricación, asistencia técnica especializada para la instalación y configuración inicial, así como soporte postventa directo por WhatsApp con nuestro personal en zulia.</p>' +
-                    '<p>MANIAWORLD despacha a domicilio a toda Venezuela: zulia (24-48h), Valencia y Maracaibo (48-72h) y resto del país de 3 a 5 días hábiles. Aceptamos transferencia bancaria, Pago Móvil, Zelle, tarjetas de crédito y débito, así como pago contra entrega en zonas cubiertas. Consulta disponibilidad exacta, descuentos por cantidad y opciones de financiamiento antes de finalizar tu compra.</p>' +
-                    '<p>¿Dudas sobre compatibilidad con tu equipo actual? Escríbenos antes de comprar y te asesoramos con la instalación, la actualización de firmware y las mejores alternativas de precio dentro del catálogo de la tienda.</p>';
-                const specs = [
-                    ['Modelo', current.name],
-                    ['Resumen técnico', current.sub],
-                    ['Condición', 'Nuevo · sellado de fábrica'],
-                    ['Garantía', '12 meses'],
-                    ['Disponibilidad', 'En stock · zulia'],
-                    ['Envío', 'A toda Venezuela']
-                ];
-                pmSpecsList.innerHTML = specs.map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>').join('');
+                const descText = (current.desc || '').trim();
+                if (descText) {
+                    accDesc.hidden = false;
+                    pmDescText.innerHTML = descText.split(/\n+/).map(t => t.trim()).filter(Boolean).map(t => '<p>' + escHtml(t) + '</p>').join('');
+                } else {
+                    accDesc.hidden = true;
+                    pmDescText.innerHTML = '';
+                }
+                const specs = (current.specs || []).filter(s => s && (s.k || s.v));
+                if (specs.length) {
+                    accSpecs.hidden = false;
+                    pmSpecsList.innerHTML = specs.map(s => '<div><dt>' + escHtml(s.k) + '</dt><dd>' + escHtml(s.v) + '</dd></div>').join('');
+                } else {
+                    accSpecs.hidden = true;
+                    pmSpecsList.innerHTML = '';
+                }
+                const accList = document.querySelector('.pm-acc-list');
+                if (accList) accList.hidden = (accDesc.hidden && accSpecs.hidden);
             }
 
             const pmCrumbsEl = document.getElementById('pmCrumbs');

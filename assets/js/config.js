@@ -23,6 +23,15 @@ window.GIGA_CONFIG = {
   IMAGE_MAX_WIDTH: 1600,
   IMAGE_WEBP_QUALITY: 0.82,
 
+  // Seguridad de la sesión del panel (ms). El panel cierra sesión solo:
+  //   idleMs: tras este tiempo SIN actividad.
+  //   maxMs:  tope absoluto desde el inicio de sesión (no se puede extender).
+  // Cambia los números a tu gusto (p. ej. 15 y 8 horas).
+  SESSION: {
+    idleMs: 30 * 60 * 1000,   // 30 minutos de inactividad
+    maxMs: 12 * 60 * 60 * 1000 // 12 horas de sesión como máximo
+  },
+
   // Fase G: CDN de imagenes (Cloudflare Worker en worker/). Solo CACHE
   // en el borde (gratis). Vacio = desactivado (se usa Supabase Storage
   // directo). Cuando se define, las imagenes del bucket se piden al

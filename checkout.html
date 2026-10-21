@@ -372,6 +372,8 @@
                             </select>
                         </div>
 
+                        <p id="closedNotice" class="hidden text-[12px] text-center mb-3 px-3 py-2 rounded-lg" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca" role="status"></p>
+
                         <button type="submit" class="f-btn">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23-1.48 0-2.93-.39-4.19-1.15l-.3-.17-3.12.82.83-3.04-.2-.32a8.188 8.188 0 0 1-1.26-4.38c.01-4.54 3.7-8.24 8.25-8.24m-3.05 4.5c-.18 0-.47.07-.71.34-.24.27-.93.91-.93 2.21s.95 2.55 1.08 2.72c.13.17 1.85 2.83 4.54 3.91 2.23.89 2.68.72 3.16.67.48-.05 1.55-.63 1.77-1.25.22-.62.22-1.15.15-1.26-.07-.11-.24-.17-.51-.3-.27-.13-1.55-.76-1.79-.85-.24-.09-.42-.13-.59.14-.18.27-.69.85-.84 1.03-.15.17-.31.2-.57.07-.27-.14-1.12-.41-2.14-1.32-.79-.7-1.32-1.56-1.48-1.82-.15-.27-.02-.41.12-.55.12-.12.27-.31.4-.47.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.47-.07-.14-.59-1.43-.82-1.95-.21-.51-.43-.44-.59-.45l-.5-.01z"/></svg>
                             Enviar cotización por WhatsApp
@@ -550,8 +552,24 @@
                 setTimeout(() => { el.style.borderColor = ''; }, 1600);
             }
 
+            /* Tienda cerrada: aviso + desactiva el envío de pedidos. */
+            const closedNotice = document.getElementById('closedNotice');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            function showClosed() {
+                if (!window.ghStoreState) return;
+                const st = window.ghStoreState();
+                if (st.open) { closedNotice.classList.add('hidden'); submitBtn.disabled = false; submitBtn.style.opacity = ''; return; }
+                closedNotice.textContent = window.ghClosedMessage ? window.ghClosedMessage(null, st) : 'Estamos cerrados.';
+                closedNotice.classList.remove('hidden');
+                submitBtn.disabled = true; submitBtn.style.opacity = '.55';
+            }
+            if (window.GigaData && GigaData.ready) { GigaData.ready.then(showClosed); }
+            setTimeout(showClosed, 0);
+
             form.addEventListener('submit', e => {
                 e.preventDefault();
+
+                if (window.ghStoreState && !window.ghStoreState().open) { showClosed(); return; }
 
                 const items = GigaCart.all();
                 if (!items.length) {

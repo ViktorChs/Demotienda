@@ -38,11 +38,112 @@
     }
     $('#toast').appendChild(t);
     var life = actionLabel ? 6500 : 3000;
-    setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateY(6px)'; }, life - 350);
+    setTimeout(function () { t.style.opacity = '0'; t.style.transform = 'translateY(8px)'; }, life - 350);
     setTimeout(function () { t.remove(); }, life);
     return t;
   }
   function money(n) { return '$' + (Number(n) || 0).toFixed(2); }
+
+  /* =========================================================
+   *  Iconos + botones de acción (fila/tarjeta) y menú "⋯"
+   * ========================================================= */
+  var ICO = {
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>',
+    pkg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>'
+  };
+  function actIcon(cls, attrs, title, icon) {
+    return '<button type="button" class="act-btn' + (cls ? ' ' + cls : '') + '" ' + attrs +
+      ' title="' + esc(title) + '" aria-label="' + esc(title) + '">' + icon + '</button>';
+  }
+  // Menú "⋯" (una sola instancia abierta). Los items llevan los mismos
+  // data-* que ya maneja el click delegado de la lista, así que no hace
+  // falta re-cablear cada acción.
+  var ACTMENU = null;
+  function closeActMenu() {
+    if (!ACTMENU) return;
+    ACTMENU.menu.hidden = true;
+    if (ACTMENU.btn) ACTMENU.btn.setAttribute('aria-expanded', 'false');
+    ACTMENU = null;
+  }
+  function openActMenu(btn) {
+    var menu = btn.parentNode && btn.parentNode.querySelector('.act-menu');
+    if (!menu) return;
+    var wasOpen = ACTMENU && ACTMENU.menu === menu;
+    closeActMenu();
+    if (wasOpen) return;
+    btn.setAttribute('aria-expanded', 'true');
+    menu.hidden = false;
+    var b = btn.getBoundingClientRect();
+    var mw = menu.offsetWidth, mh = menu.offsetHeight;
+    var left = Math.max(8, Math.min((window.innerWidth || 9999) - mw - 8, b.right - mw));
+    var top = b.bottom + 6;
+    if (top + mh > (window.innerHeight || 9999) - 8) top = Math.max(8, b.top - mh - 6);
+    menu.style.left = Math.round(left) + 'px';
+    menu.style.top = Math.round(top) + 'px';
+    ACTMENU = { btn: btn, menu: menu };
+  }
+  document.addEventListener('click', function (e) {
+    if (!ACTMENU) return;
+    var t = e.target;
+    if (ACTMENU.menu.contains(t)) {
+      if (t.closest('[data-dup],[data-del],[data-items]')) closeActMenu();
+      return;
+    }
+    if (ACTMENU.btn.contains(t)) return;
+    closeActMenu();
+  }, true);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeActMenu(); });
+  window.addEventListener('scroll', closeActMenu, true);
+
+  // Acciones estándar de una fila/tarjeta de producto (icono + menú ⋯).
+  function productActions(r, isCombo) {
+    return actIcon('act-edit', 'data-edit="' + esc(r.id) + '"', 'Editar', ICO.edit) +
+      actIcon(r.hidden ? 'is-off' : 'is-on', 'data-toggle="' + esc(r.id) + '"',
+        r.hidden ? 'Oculto — pulsa para mostrar' : 'Visible — pulsa para ocultar',
+        r.hidden ? ICO.eyeOff : ICO.eye) +
+      '<div class="act-menu-wrap">' +
+        actIcon('act-more', 'data-menu="' + esc(r.id) + '" aria-haspopup="menu" aria-expanded="false"', 'Más acciones', ICO.more) +
+        '<div class="act-menu" role="menu" hidden>' +
+          (isCombo ? '<button type="button" role="menuitem" data-items="' + esc(r.id) + '">' + ICO.pkg + '<span>Piezas e imagen</span></button>' : '') +
+          '<button type="button" role="menuitem" data-dup="' + esc(r.id) + '">' + ICO.copy + '<span>Duplicar</span></button>' +
+          '<div class="act-menu-sep"></div>' +
+          '<button type="button" role="menuitem" class="danger" data-del="' + esc(r.id) + '">' + ICO.trash + '<span>Borrar</span></button>' +
+        '</div>' +
+      '</div>';
+  }
+  // Acciones genéricas (resto de listas: editar + borrar).
+  function entityActions(r) {
+    return actIcon('act-edit', 'data-edit="' + esc(r.id) + '"', 'Editar', ICO.edit) +
+      actIcon('act-del', 'data-del="' + esc(r.id) + '"', 'Borrar', ICO.trash);
+  }
+
+  // Fase 3/4: UI persistente (por tienda) y navegación con filtro.
+  function uiKey(k) { return 'gh_ui_' + sid() + '_' + k; }
+  function uiGet(k, def) {
+    try { var v = localStorage.getItem(uiKey(k)); return v == null ? def : JSON.parse(v); } catch (e) { return def; }
+  }
+  function uiSet(k, v) {
+    try { localStorage.setItem(uiKey(k), JSON.stringify(v)); } catch (e) {}
+  }
+  // Navegación entre pestañas con filtro/estado inicial (p. ej. desde el dashboard).
+  var PENDING = {};
+  function goTab(tab, filter) {
+    if (filter) PENDING[tab] = filter;
+    switchTab(tab);
+  }
+  function errorState(mount, err, retry) {
+    mount.innerHTML = '<div class="card empty"><div class="empty-ico">⚠️</div>' +
+      '<div class="empty-title">No se pudo cargar</div>' +
+      '<p class="muted">' + esc((err && err.message) || 'Error de conexión.') + '</p>' +
+      '<button class="btn primary" id="retryBtn">Reintentar</button></div>';
+    var b = $('#retryBtn', mount);
+    if (b) b.addEventListener('click', function () { mount.innerHTML = skeleton(4); retry(); });
+  }
 
   function skeleton(rows) {
     var out = '';
@@ -88,40 +189,148 @@
   }
 
   /* =========================================================
-   *  Modal genérico
+   *  Modal genérico (accesible)
    * ========================================================= */
-  function openModal(opts) {
-    closeModal();
-    var root = $('#modalRoot');
-    var ov = el('div', { class: 'overlay' });
-    var modal = el('div', { class: 'modal' });
-    var head = el('header', null,
-      '<h3>' + esc(opts.title || '') + '</h3>' +
-      '<button class="btn ghost sm" data-x>✕</button>');
-    var body = el('div', { class: 'body' }, opts.body || '');
-    var foot = el('footer');
-    (opts.buttons || []).forEach(function (b) {
-      foot.appendChild(el('button', { class: 'btn ' + (b.class || '') }, esc(b.label)));
-      foot.lastChild.addEventListener('click', function () { b.onClick && b.onClick(); });
+  var MODAL = null;
+
+  function focusables(root) {
+    return $all('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])', root)
+      .filter(function (n) { return n.offsetParent !== null; });
+  }
+  function busy(btn, on) {
+    if (on) {
+      if (btn.dataset.label == null) btn.dataset.label = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.add('busy');
+      btn.innerHTML = '<span class="btn-spin"></span>' + btn.dataset.label;
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('busy');
+      if (btn.dataset.label != null) btn.innerHTML = btn.dataset.label;
+    }
+  }
+  function trapKey(e) {
+    if (!MODAL || e.key !== 'Tab') return;
+    var f = focusables(MODAL.modal);
+    if (!f.length) { e.preventDefault(); return; }
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+  // Construye (o reconstruye) los botones del pie del modal.
+  function fillFooter(foot, buttons) {
+    foot.innerHTML = '';
+    (buttons || []).forEach(function (b) {
+      if (b.spacer) { foot.appendChild(el('span', { class: 'foot-spacer' })); return; }
+      var btn = el('button', { class: 'btn ' + (b.class || '') + (b.sm ? ' sm' : ''), type: 'button' }, esc(b.label));
+      if (b.attrs) Object.keys(b.attrs).forEach(function (a) { btn.setAttribute(a, b.attrs[a]); });
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        var r = b.onClick && b.onClick();
+        if (r && typeof r.then === 'function') {
+          busy(btn, true);
+          r.then(function () { busy(btn, false); }, function () { busy(btn, false); });
+        }
+      });
+      foot.appendChild(btn);
     });
-    if (!opts.buttons || !opts.buttons.length) {
-      var cancel = el('button', { class: 'btn' }, 'Cerrar');
-      cancel.addEventListener('click', closeModal);
+    if (!buttons || !buttons.length) {
+      var cancel = el('button', { class: 'btn', type: 'button' }, 'Cerrar');
+      cancel.addEventListener('click', requestClose);
       foot.appendChild(cancel);
     }
+    return foot;
+  }
+  function openModal(opts) {
+    opts = opts || {};
+    if (MODAL) closeModal(true);
+    var root = $('#modalRoot');
+    // Limpia overlays que aún estén animando su salida.
+    if (root) $all('.overlay.closing', root).forEach(function (o) { o.remove(); });
+    var ov = el('div', { class: 'overlay' });
+    var modal = el('div', { class: 'modal' + (opts.size ? ' ' + opts.size : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': opts.title || 'Diálogo' });
+    var head = el('header', null,
+      '<h3>' + esc(opts.title || '') + '</h3>' +
+      '<button class="btn ghost sm" data-x type="button" aria-label="Cerrar">✕</button>');
+    var body = el('div', { class: 'body' }, opts.body || '');
+    var foot = el('footer');
+    fillFooter(foot, opts.buttons);
     modal.appendChild(head); modal.appendChild(body); modal.appendChild(foot);
     ov.appendChild(modal);
-    ov.addEventListener('mousedown', function (e) { if (e.target === ov) closeModal(); });
-    head.querySelector('[data-x]').addEventListener('click', closeModal);
     root.appendChild(ov);
+
+    MODAL = { ov: ov, modal: modal, guard: !!opts.guard, dirty: false, prevFocus: document.activeElement, closing: false };
+    if (opts.guard) {
+      body.addEventListener('input', function () { MODAL.dirty = true; });
+      body.addEventListener('change', function () { MODAL.dirty = true; });
+    }
+
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) requestClose(); });
+    head.querySelector('[data-x]').addEventListener('click', requestClose);
+    document.body.classList.add('modal-open');
+    document.addEventListener('keydown', trapKey, true);
+
     opts.onMount && opts.onMount(body, modal);
-    return { body: body, close: closeModal };
+    setTimeout(function () {
+      var target = modal.querySelector('[autofocus]');
+      if (!target) {
+        var bf = focusables(body), ff = focusables(foot), mf = focusables(modal);
+        target = bf[0] || ff[0] || mf[0];
+      }
+      if (target) target.focus();
+    }, 0);
+    return { body: body, modal: modal, close: closeModal };
   }
-  function closeModal() { $('#modalRoot').innerHTML = ''; }
+  function requestClose() {
+    if (!MODAL || MODAL.closing) return;
+    if (MODAL.guard && MODAL.dirty) { confirmDiscard(closeModal); return; }
+    closeModal();
+  }
+  function closeModal(force) {
+    var root = $('#modalRoot');
+    var had = !!MODAL;
+    if (MODAL) {
+      document.removeEventListener('keydown', trapKey, true);
+      var pf = MODAL.prevFocus;
+      MODAL = null;
+      if (pf && pf.focus) { try { pf.focus(); } catch (e) {} }
+    }
+    if (!root) return;
+    document.body.classList.remove('modal-open');
+    var ov = root.firstElementChild;
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    if (!had || force || reduce || !ov) { root.innerHTML = ''; return; }
+    // Salida simétrica a la entrada (pop): se difiere el borrado ~140 ms.
+    ov.classList.add('closing');
+    var modal = ov.querySelector('.modal');
+    if (modal) modal.classList.add('closing');
+    setTimeout(function () { if (ov.parentNode === root) root.removeChild(ov); }, 150);
+  }
+  // Diálogo de cambios sin guardar (encima del modal activo).
+  function confirmDiscard(onDiscard) {
+    var ov = el('div', { class: 'overlay top' });
+    var modal = el('div', { class: 'modal sm', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Cambios sin guardar' });
+    modal.appendChild(el('header', null, '<h3>Cambios sin guardar</h3>'));
+    modal.appendChild(el('div', { class: 'body' }, '<p>Hay cambios que no has guardado. ¿Quieres descartarlos?</p>'));
+    var foot = el('footer');
+    var keep = el('button', { class: 'btn', type: 'button' }, 'Seguir editando');
+    var drop = el('button', { class: 'btn danger', type: 'button' }, 'Descartar cambios');
+    foot.appendChild(keep); foot.appendChild(drop);
+    modal.appendChild(foot);
+    ov.appendChild(modal);
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    keep.addEventListener('click', close);
+    drop.addEventListener('click', function () { close(); onDiscard && onDiscard(); });
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(); });
+    setTimeout(function () { keep.focus(); }, 0);
+  }
   function confirmDialog(msg, onYes, opts) {
     opts = opts || {};
     openModal({
       title: opts.title || 'Confirmar',
+      size: opts.size || 'sm',
       body: '<p>' + esc(msg) + '</p>',
       buttons: [
         { label: opts.cancelLabel || 'Cancelar', onClick: closeModal },
@@ -161,13 +370,17 @@
         { k: 'hidden', l: 'Oculto', r: boolTag }
       ],
       fields: [
-        { k: 'name', l: 'Nombre', req: true },
-        { k: 'slug', l: 'Slug (URL)' },
-        { k: 'color', l: 'Color', t: 'color' },
-        { k: 'icon', l: 'Icono SVG (opcional)' },
-        { k: 'image', l: 'Imagen', t: 'image' },
-        { k: 'position', l: 'Posición', t: 'number' },
-        { k: 'hidden', l: 'Oculto', t: 'bool' }
+        { k: 'name', l: 'Nombre', req: true, step: 0 },
+        { k: 'slug', l: 'Slug (URL)', step: 0 },
+        { k: 'color', l: 'Color', t: 'color', step: 0 },
+        { k: 'icon', l: 'Icono SVG (opcional)', step: 0 },
+        { k: 'image', l: 'Imagen', t: 'image', step: 1 },
+        { k: 'position', l: 'Posición', t: 'number', step: 1 },
+        { k: 'hidden', l: 'Oculto', t: 'bool', step: 1 }
+      ],
+      steps: [
+        { title: 'Identidad', short: 'Identidad', sub: 'Nombre, slug, color e icono de la categoría.' },
+        { title: 'Imagen y orden', short: 'Imagen', sub: 'Imagen, posición y visibilidad.' }
       ]
     },
     subcategories: {
@@ -183,6 +396,9 @@
         { k: 'name', l: 'Nombre', req: true },
         { k: 'position', l: 'Posición', t: 'number' },
         { k: 'hidden', l: 'Oculto', t: 'bool' }
+      ],
+      steps: [
+        { title: 'Datos de la subcategoría', short: 'Datos', sub: 'Categoría padre, nombre, orden y visibilidad.' }
       ]
     },
     nav_groups: {
@@ -336,10 +552,21 @@
   /* =========================================================
    *  Formularios
    * ========================================================= */
+  function specRowHtml(s) {
+    s = s || {};
+    return '<span class="spec-row" draggable="true">' +
+      '<span class="drag-handle" title="Arrastrar para reordenar">⠿</span>' +
+      '<input type="text" class="spec-k" placeholder="Clave (ej: Garantía)" value="' + esc(s.k || '') + '">' +
+      '<input type="text" class="spec-v" placeholder="Valor (ej: 12 meses)" value="' + esc(s.v || '') + '">' +
+      '<button type="button" class="btn sm danger" data-specs-rm title="Quitar fila">×</button>' +
+      '</span>';
+  }
+
   function fieldHtml(f, val) {
     val = val == null ? '' : val;
     var id = 'f_' + f.k;
-    var h = '<div class="field" data-field="' + f.k + '"><label for="' + id + '">' + esc(f.l) +
+    var wide = (f.t === 'image' || f.t === 'gallery' || f.t === 'textarea' || f.t === 'specs');
+    var h = '<div class="field' + (wide ? ' full' : '') + '" data-field="' + f.k + '"><label for="' + id + '">' + esc(f.l) +
       (f.req ? ' *' : '') + '</label>';
     if (f.t === 'bool') {
       h += '<div class="check"><input type="checkbox" id="' + id + '" data-k="' + f.k + '"' + (val ? ' checked' : '') + '><span>Activado</span></div>';
@@ -360,6 +587,12 @@
         '<textarea id="' + id + '" data-k="' + f.k + '" data-gallery-ta="' + f.k + '" rows="2" placeholder="Una ruta/URL por linea">' + esc(gval) + '</textarea>' +
         '<div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input type="file" accept="image/*" multiple data-gallery-add="' + f.k + '"><span class="help">Arrastra las miniaturas para reordenar. Sube archivos para añadir.</span></div>' +
         '</div>';
+    } else if (f.t === 'specs') {
+      var srows = Array.isArray(val) ? val : [];
+      h += '<div class="specs-field" data-specs="' + f.k + '">' +
+        '<div class="specs-rows">' + srows.map(specRowHtml).join('') + '</div>' +
+        '<button type="button" class="btn sm ghost" data-specs-add="' + f.k + '">+ Añadir fila</button>' +
+        '</div>';
     } else if (f.t === 'ref') {
       var opts = '<option value="">— elegir —</option>';
       (S.cache[f.ref] || []).forEach(function (r) {
@@ -367,8 +600,20 @@
       });
       h += '<select id="' + id + '" data-k="' + f.k + '" data-ref="' + f.ref + '"' + (f.req ? ' required' : '') + '>' + opts + '</select>';
     } else if (f.t === 'money') {
-      h += '<input type="text" inputmode="decimal" class="money-input" id="' + id + '" data-k="' + f.k + '"' +
-        ' value="' + esc(val) + '"' + (f.req ? ' required' : '') + ' data-type="money">';
+      h += '<div class="money-wrap"><span class="money-cur">$</span>' +
+        '<input type="text" inputmode="decimal" class="money-input" id="' + id + '" data-k="' + f.k + '"' +
+        ' value="' + esc(val) + '"' + (f.req ? ' required' : '') + ' data-type="money"></div>';
+    } else if (f.t === 'badge') {
+      var cur = String(val || '');
+      var opts = PRODUCT_BADGES.slice();
+      if (cur && opts.indexOf(cur) === -1) opts.push(cur);
+      h += '<div class="badge-opts" data-badge="' + f.k + '">' +
+        '<input type="hidden" data-k="' + f.k + '" value="' + esc(cur) + '">' +
+        opts.map(function (o) {
+          var lbl = o === '' ? 'Sin etiqueta' : o;
+          return '<button type="button" class="badge-opt' + (o === cur ? ' active' : '') + '" data-val="' + esc(o) + '"' +
+            (o === '' ? '' : ' aria-pressed="' + (o === cur ? 'true' : 'false') + '"') + '>' + esc(lbl) + '</button>';
+        }).join('') + '</div>';
     } else {
       h += '<input type="' + (f.t === 'number' ? 'number' : 'text') + '" id="' + id + '" data-k="' + f.k + '"' +
         (f.t === 'number' ? ' step="any"' : '') + ' value="' + esc(val) + '"' + (f.req ? ' required' : '') +
@@ -400,6 +645,16 @@
       else if (f.t === 'ref') out[f.k] = node.value === '' ? null : (/^\d+$/.test(node.value) ? Number(node.value) : node.value);
       else if (f.t === 'color') out[f.k] = root.querySelector('[data-for="' + f.k + '"]').value.trim() || node.value;
       else if (f.t === 'gallery') out[f.k] = node.value.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+      else if (f.t === 'specs') {
+        var srows = [];
+        var wrap = root.querySelector('[data-specs="' + f.k + '"]');
+        if (wrap) $all('.spec-row', wrap).forEach(function (r) {
+          var kk = r.querySelector('.spec-k').value.trim();
+          var vv = r.querySelector('.spec-v').value.trim();
+          if (kk || vv) srows.push({ k: kk, v: vv });
+        });
+        out[f.k] = srows;
+      }
       else out[f.k] = node.value.trim();
     });
     return out;
@@ -412,6 +667,21 @@
       var txt = root.querySelector('[data-for="' + picker.dataset.k + '"]');
       picker.addEventListener('input', function () { txt.value = picker.value; });
       txt.addEventListener('input', function () { if (/^#[0-9a-f]{6}$/i.test(txt.value)) picker.value = txt.value; });
+    });
+    // etiqueta: chips -> input hidden (mantiene readForm sin cambios)
+    $all('[data-badge]', root).forEach(function (group) {
+      var hidden = group.querySelector('input[data-k]');
+      $all('.badge-opt', group).forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          hidden.value = btn.dataset.val;
+          $all('.badge-opt', group).forEach(function (b) {
+            var on = b === btn;
+            b.classList.toggle('active', on);
+            if (b.hasAttribute('aria-pressed')) b.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+          hidden.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      });
     });
     // subida de imágenes
     function doUpload(file, k, prev) {
@@ -492,6 +762,17 @@
       });
       renderChips();
     });
+    // especificaciones: filas clave/valor (añadir, quitar, reordenar)
+    $all('[data-specs]', root).forEach(function (wrap) {
+      var rowsEl = wrap.querySelector('.specs-rows');
+      var addBtn = wrap.querySelector('[data-specs-add]');
+      if (addBtn) addBtn.addEventListener('click', function () { rowsEl.insertAdjacentHTML('beforeend', specRowHtml({})); });
+      var dragRow = null;
+      rowsEl.addEventListener('dragstart', function (e) { var r = e.target.closest('.spec-row'); if (!r) return; dragRow = r; r.classList.add('dragging'); try { e.dataTransfer.setData('text/plain', '1'); e.dataTransfer.effectAllowed = 'move'; } catch (_) {} });
+      rowsEl.addEventListener('dragend', function () { if (dragRow) dragRow.classList.remove('dragging'); dragRow = null; });
+      rowsEl.addEventListener('dragover', function (e) { if (!dragRow) return; e.preventDefault(); var over = e.target.closest('.spec-row'); if (!over || over === dragRow) return; var r = rowsEl.getBoundingClientRect(); var after = (e.clientY - r.top) > r.height / 2; rowsEl.insertBefore(dragRow, after ? over.nextSibling : over); });
+      wrap.addEventListener('click', function (e) { var rm = e.target.closest('[data-specs-rm]'); if (rm) rm.closest('.spec-row').remove(); });
+    });
     // filtro dependiente: subcategory_id según category_id
     var catSel = root.querySelector('[data-k="category_id"][data-ref="categories"]');
     var subSel = root.querySelector('[data-k="subcategory_id"][data-ref="subcategories"]');
@@ -510,10 +791,206 @@
   }
 
   /* =========================================================
+   *  Asistente por pasos (productos, combos, categorías...)
+   * =========================================================
+   *  Idea: TODOS los campos quedan montados en el DOM; cada paso
+   *  solo los muestra/oculta. Así readForm/wireForm/reportValidity
+   *  y los handlers de imagen/galería/specs siguen funcionando sin
+   *  cambios. */
+
+  // Agrupa una lista de campos en pasos según su propiedad .step.
+  function buildSteps(fields, meta) {
+    var steps = meta.map(function (s) {
+      return { title: s.title, short: s.short, sub: s.sub, icon: s.icon, fields: [] };
+    });
+    fields.forEach(function (f) {
+      var i = f.step || 0;
+      if (!steps[i]) i = 0;
+      steps[i].fields.push(f);
+    });
+    return steps;
+  }
+
+  function flattenFields(steps) {
+    var out = [];
+    steps.forEach(function (s) { if (Array.isArray(s.fields)) out = out.concat(s.fields); });
+    return out;
+  }
+
+  function openFormWizard(opts) {
+    var steps = opts.steps || [];
+    var values = opts.values || {};
+    var allFields = flattenFields(steps);
+    var cur = 0;
+    // Al editar (freeNav) se desbloquean todos los pasos desde el inicio.
+    var maxStep = opts.freeNav ? steps.length - 1 : 0;
+    var formState = {};
+    var single = steps.length <= 1;
+
+    var stepsHtml = steps.map(function (s, i) {
+      var hasFields = Array.isArray(s.fields);
+      var body = s.review ? (opts.reviewHtml || '') :
+        (hasFields ? '<div class="fgrid">' + renderForm(s.fields, values) + '</div>' : (s.html || ''));
+      var head = (s.title && !single)
+        ? '<div class="fstep-head"><h4>' + esc(s.title) + '</h4>' + (s.sub ? '<p>' + esc(s.sub) + '</p>' : '') + '</div>'
+        : '';
+      return '<section class="fstep" data-step="' + i + '"' + (i ? ' hidden' : '') + '>' + head + body + '</section>';
+    }).join('');
+
+    var stepper = single ? '' : '<div class="wiz-steps">' + steps.map(function (s, i) {
+      return '<button type="button" class="wiz-dot" data-goto="' + i + '">' +
+        '<span class="wiz-num">' + (i + 1) + '</span>' +
+        '<span class="wiz-lbl">' + esc(s.short || s.title || ('Paso ' + (i + 1))) + '</span></button>';
+    }).join('') + '</div>';
+
+    var m = openModal({
+      title: opts.title,
+      guard: opts.guard !== false,
+      body: '<form id="entForm" novalidate><div class="wiz' + (single ? ' single' : '') + '">' +
+        stepper + '<div class="wiz-body">' + stepsHtml + '</div></div></form>',
+      buttons: opts.buttons
+    });
+
+    var foot = m.modal.querySelector('footer');
+    var h3 = m.modal.querySelector('header h3');
+    wireForm(allFields, m.body, formState);
+
+    function stepEl(i) { return $('.fstep[data-step="' + i + '"]', m.body); }
+
+    function stepInvalid(i) {
+      var sec = stepEl(i);
+      if (!sec) return null;
+      var bad = null;
+      $all('input, select, textarea', sec).forEach(function (n) {
+        if (bad || n.disabled) return;
+        if (typeof n.checkValidity === 'function' && !n.checkValidity()) bad = n;
+      });
+      return bad;
+    }
+    function validateStep(i) {
+      if (single) return true;
+      var bad = stepInvalid(i);
+      if (bad) { bad.reportValidity(); if (bad.focus) bad.focus(); return false; }
+      return true;
+    }
+    function invalidAny() {
+      for (var i = 0; i < steps.length; i++) {
+        var bad = stepInvalid(i);
+        if (bad) return { step: i, node: bad };
+      }
+      return null;
+    }
+
+    function show(i) {
+      $all('.fstep', m.body).forEach(function (el) { el.hidden = Number(el.dataset.step) !== i; });
+      $all('.wiz-dot', m.body).forEach(function (d) {
+        var n = Number(d.dataset.goto);
+        d.classList.toggle('active', n === i);
+        d.classList.toggle('done', n < i);
+        d.disabled = n > maxStep;
+      });
+      if (h3 && !single) h3.textContent = opts.title + ' · Paso ' + (i + 1) + ' de ' + steps.length;
+      syncFooter();
+      var sec = stepEl(i);
+      var target = sec && sec.querySelector('input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea');
+      if (target && !steps[i].review) target.focus();
+      if (opts.onStep) opts.onStep(i, m.body);
+    }
+    function go(i) { cur = i; if (i > maxStep) maxStep = i; show(cur); }
+
+    function syncFooter() {
+      var specs = [{ label: 'Cancelar', class: 'ghost', onClick: requestClose }];
+      if (!single) {
+        specs.push({ spacer: true });
+        if (cur > 0) specs.push({ label: '← Anterior', onClick: function () { go(cur - 1); } });
+        if (cur < steps.length - 1) {
+          specs.push({ label: 'Siguiente →', class: 'primary', onClick: function () { if (validateStep(cur)) go(cur + 1); } });
+        } else {
+          specs.push({ label: opts.saveLabel || 'Guardar', class: 'primary', onClick: doSave });
+        }
+      } else {
+        specs.push({ spacer: true });
+        specs.push({ label: opts.saveLabel || 'Guardar', class: 'primary', onClick: doSave });
+      }
+      fillFooter(foot, specs);
+    }
+
+    function doSave() {
+      if (formState.uploading) return toast('Espera: subiendo imagen…', 'err');
+      var bad = invalidAny();
+      if (bad) {
+        if (bad.step !== cur) go(bad.step);
+        setTimeout(function () { bad.node.reportValidity(); if (bad.node.focus) bad.node.focus(); }, 0);
+        return;
+      }
+      return opts.onSave(readForm(allFields, m.body), m);
+    }
+
+    function advance() { if (cur < steps.length - 1) { if (validateStep(cur)) go(cur + 1); } else doSave(); }
+
+    // Navegación por los puntos del stepper (solo hasta el paso más lejano alcanzado).
+    $all('.wiz-dot', m.body).forEach(function (d) {
+      d.addEventListener('click', function () { var n = Number(d.dataset.goto); if (n <= maxStep) go(n); });
+    });
+    // Enter avanza de paso (no en textarea ni en inputs de archivo).
+    m.body.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' || single) return;
+      var t = e.target;
+      if ((t.tagName === 'INPUT' && t.type !== 'file') || t.tagName === 'SELECT') { e.preventDefault(); advance(); }
+    });
+
+    wireReview(m, opts, allFields);
+    show(0);
+    return { body: m.body, modal: m.modal, close: closeModal, go: go };
+  }
+
+  // Vista previa en vivo (paso "Revisar") reutilizando el markup de .pcard.
+  function wireReview(m, opts, allFields) {
+    var host = $('#wizPreview', m.body);
+    if (!host) return;
+    function render() {
+      var v = readForm(allFields, m.body);
+      var badge = typeof v.badge === 'string' ? v.badge : '';
+      var specs = Array.isArray(v.specs) ? v.specs.filter(function (s) { return s.k || s.v; }).length : 0;
+      host.innerHTML =
+        '<div class="pcard">' +
+          '<div class="pcard-img">' +
+            (v.image ? '<img src="' + esc(SB.resolveImage(v.image, 480)) + '" alt="">' : '<div class="pcard-ph">Sin imagen</div>') +
+            (badge ? '<span class="pcard-badge">' + esc(badge) + '</span>' : '') +
+            (v.hidden ? '<span class="pcard-hidden">Oculto</span>' : '') +
+          '</div>' +
+          '<div class="pcard-body">' +
+            '<div class="pcard-name">' + esc(v.name || 'Nombre del producto') + '</div>' +
+            (v.sub ? '<div class="pcard-sub">' + esc(v.sub) + '</div>' : '') +
+            '<div class="pcard-meta"><span class="pcard-price"><span class="cur">$</span><strong>' + esc(Number(v.price) || 0) + '</strong></span>' +
+              (v.category_id ? '<span class="pcard-cat">' + esc(refName('categories', v.category_id)) + '</span>' : '') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<ul class="review-list">' +
+          revRow('Nombre', v.name || '—') +
+          revRow('Precio', money(v.price)) +
+          (v.original_price != null && v.original_price !== '' ? revRow('Antes', money(v.original_price)) : '') +
+          revRow('Etiqueta', badge || 'Sin etiqueta') +
+          revRow('Categoría', v.category_id ? refName('categories', v.category_id) : '—') +
+          revRow('Subcategoría', v.subcategory_id ? refName('subcategories', v.subcategory_id) : '—') +
+          revRow('Ficha', specs + ' fila(s)') +
+          revRow('Estado', v.hidden ? 'Oculto' : 'Visible') +
+        '</ul>';
+    }
+    function revRow(k, val) { return '<li><span class="k">' + esc(k) + '</span><span>' + esc(val) + '</span></li>'; }
+    m.body.addEventListener('input', render);
+    m.body.addEventListener('change', render);
+    render();
+  }
+
+  /* =========================================================
    *  Lista CRUD genérica
    * ========================================================= */
-  function renderEntityList(key, mount) {
+  function renderEntityList(key, mount, opts) {
+    opts = opts || {};
     var ent = ENTITIES[key];
+    var title = opts.title || ent.title;
+    var run = function () {
     mount.innerHTML = skeleton(4);
     var deps = ent.fields.filter(function (f) { return f.t === 'ref'; }).map(function (f) { return f.ref; });
     var uniq = deps.filter(function (d, i) { return deps.indexOf(d) === i; });
@@ -521,7 +998,19 @@
     Promise.all(uniq.map(function (t) { return S.cache[t] ? null : load(t, { select: '*', order: 'position.asc,id.asc' }); }))
       .then(function () { return load(key, { select: '*', order: ent.order }); })
       .then(function (rows) {
-        var state = { q: '' };
+        var uiTag = opts.uiKey || key;
+        var saved = uiGet(uiTag, {});
+        var allowBulk = !opts.onRowClick;
+        var hasHidden = ent.fields.some(function (f) { return f.k === 'hidden'; });
+        var state = { q: saved.q || '', sort: saved.sort || (sortable ? 'position' : '') };
+        var sel = {};
+        function persist() { uiSet(uiTag, { q: state.q, sort: state.sort }); }
+        function baseRows() {
+          if (opts.filterField && opts.filterValue != null && opts.filterValue !== '') {
+            return rows.filter(function (r) { return String(r[opts.filterField]) === String(opts.filterValue); });
+          }
+          return rows;
+        }
         draw();
 
         function searchFields() {
@@ -529,59 +1018,166 @@
             .concat([function (r) { return r.name; }]);
         }
         function labelOf(r) { return r && (r.name || r.label || r.key || r.slug); }
+        function sortRows(arr) {
+          if (!state.sort || state.sort === 'position') return arr;
+          var p = state.sort.split(':'), k = p[0], dir = p[1] === 'desc' ? -1 : 1;
+          return arr.slice().sort(function (a, b) {
+            var av = a[k], bv = b[k];
+            if (typeof av === 'number' || typeof bv === 'number') { av = Number(av) || 0; bv = Number(bv) || 0; return (av - bv) * dir; }
+            av = String(av == null ? '' : av).toLowerCase(); bv = String(bv == null ? '' : bv).toLowerCase();
+            return av < bv ? -dir : av > bv ? dir : 0;
+          });
+        }
+        function sortOptions() {
+          var o = sortable ? [['position', 'Orden manual']] : [];
+          ent.cols.forEach(function (c) { o.push([c.k + ':asc', c.l + ' ↑']); o.push([c.k + ':desc', c.l + ' ↓']); });
+          return o;
+        }
+        function byId(id) { return rows.filter(function (r) { return String(r.id) === String(id); })[0]; }
 
         function draw() {
+          var btns = [];
+          if (!opts.hideCsv) btns.push({ label: 'Exportar CSV', id: 'csvBtn', class: 'ghost' });
+          if (!opts.hideNew) btns.push({ label: '+ Nuevo', id: 'newBtn', class: 'primary' });
           var html = toolbarHtml({
-            search: true, searchId: 'entQ', placeholder: 'Buscar ' + ent.title.toLowerCase() + '…',
-            countId: 'entCount',
-            buttons: [
-              { label: 'Exportar CSV', id: 'csvBtn', class: 'ghost' },
-              { label: '+ Nuevo', id: 'newBtn', class: 'primary' }
-            ]
-          }) + '<div id="entBody"></div>';
+            search: true, searchId: 'entQ', placeholder: 'Buscar ' + title.toLowerCase() + '…',
+            filters: [{ id: 'entSort', options: sortOptions() }],
+            countId: 'entCount', countText: opts.countText,
+            buttons: btns
+          }) + (opts.hint ? '<p class="muted" style="font-size:12.5px;margin:0 0 8px">' + esc(opts.hint) + '</p>' : '') +
+            '<div id="entBulk" class="bulkbar" hidden></div><div id="entBody"></div>';
           mount.innerHTML = html;
+          $('#entQ', mount).value = state.q;
+          $('#entSort', mount).value = state.sort;
           renderBody();
-          $('#entQ', mount).addEventListener('input', function () { state.q = this.value; renderBody(); });
-          $('#newBtn', mount).addEventListener('click', function () { openEditor(null); });
-          $('#csvBtn', mount).addEventListener('click', exportCsv);
+          $('#entQ', mount).addEventListener('input', function () { state.q = this.value; persist(); renderBody(); });
+          $('#entSort', mount).addEventListener('change', function () { state.sort = this.value; persist(); renderBody(); });
+          if ($('#newBtn', mount)) $('#newBtn', mount).addEventListener('click', function () { openEditor(null); });
+          if ($('#csvBtn', mount)) $('#csvBtn', mount).addEventListener('click', exportCsv);
+          if (allowBulk) {
+            $('#entBulk', mount).addEventListener('click', function (e) {
+              var h = e.target.closest('[data-bulk-hidden]');
+              if (h) { bulkHidden(h.dataset.bulkHidden === '1'); return; }
+              if (e.target.closest('[data-bulk-del]')) { bulkDelete(); return; }
+              if (e.target.closest('[data-bulk-clear]')) { sel = {}; renderBody(); return; }
+            });
+          }
         }
 
         function renderBody() {
           var body = $('#entBody', mount);
-          var view = filterRows(rows, state.q, searchFields());
-          $('#entCount', mount).textContent = view.length + ' de ' + rows.length + ' registro(s)';
-          if (!rows.length) {
-            body.innerHTML = emptyState('Sin ' + ent.title.toLowerCase() + ' todavía', 'Crea el primer registro para empezar.', 'Nuevo', 'emptyNew');
+          var all = baseRows();
+          var view = sortRows(filterRows(all, state.q, searchFields()));
+          $('#entCount', mount).textContent = view.length + ' de ' + all.length + ' registro(s)';
+          updateBulk();
+          if (!all.length) {
+            body.innerHTML = emptyState('Sin ' + title.toLowerCase() + ' todavía', opts.emptySub || 'Crea el primer registro para empezar.', opts.hideNew ? null : 'Nuevo', 'emptyNew');
             var eb = $('#emptyNew', body); if (eb) eb.addEventListener('click', function () { openEditor(null); });
             return;
           }
-          if (!view.length) { body.innerHTML = '<div class="card empty">Nada coincide con «' + esc(state.q) + '».</div>'; return; }
-          body.innerHTML = '<div class="card" style="padding:0;overflow:auto"><table class="responsive' + (sortable ? ' sortable' : '') + '"><thead><tr>' +
-            (sortable ? '<th class="drag-h"></th>' : '') +
-            ent.cols.map(function (c) { return '<th>' + esc(c.l) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
+          if (!view.length) { body.innerHTML = '<div class="card empty">' + esc(opts.emptyFilter || ('Nada coincide con «' + state.q + '».')) + '</div>'; return; }
+          var allChecked = allowBulk && view.length && view.every(function (r) { return sel[r.id]; });
+          body.innerHTML = '<div class="card" style="padding:0;overflow:auto"><table class="responsive' + (state.sort === 'position' && sortable ? ' sortable' : '') + '"><thead><tr>' +
+            (allowBulk ? '<th class="pick-h"><input type="checkbox" data-all' + (allChecked ? ' checked' : '') + ' title="Seleccionar todo"></th>' : '') +
+            (state.sort === 'position' && sortable ? '<th class="drag-h"></th>' : '') +
+            ent.cols.map(function (c) { return '<th class="sort-th" data-sortkey="' + esc(c.k) + '">' + esc(c.l) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
             view.map(function (r) {
-              return '<tr data-id="' + esc(r.id) + '">' +
-                (sortable ? '<td class="drag-cell" data-label=""><span class="drag-handle" title="Arrastrar para ordenar">⠿</span></td>' : '') +
+              var isSel = opts.selectedId != null && String(r.id) === String(opts.selectedId);
+              var cls = [];
+              if (opts.onRowClick) cls.push('row-click');
+              if (isSel) cls.push('selected');
+              if (sel[r.id]) cls.push('picked');
+              return '<tr data-id="' + esc(r.id) + '"' + (cls.length ? ' class="' + cls.join(' ') + '"' : '') + '>' +
+                (allowBulk ? '<td class="pick-cell" data-label=""><input type="checkbox" data-sel="' + esc(r.id) + '"' + (sel[r.id] ? ' checked' : '') + '></td>' : '') +
+                (state.sort === 'position' && sortable ? '<td class="drag-cell" data-label=""><span class="drag-handle" title="Arrastrar para ordenar">⠿</span></td>' : '') +
                 ent.cols.map(function (c) {
                   var v = r[c.k];
                   return '<td data-label="' + esc(c.l) + '">' + (c.r ? c.r(v, r) : esc(v == null ? '' : v)) + '</td>';
                 }).join('') +
-                '<td data-label=""><div class="list-actions"><button class="btn sm" data-edit="' + esc(r.id) + '">Editar</button>' +
-                '<button class="btn sm danger" data-del="' + esc(r.id) + '">Borrar</button></div></td></tr>';
+                '<td data-label=""><div class="list-actions icon-actions">' + entityActions(r) + '</div></td></tr>';
             }).join('') + '</tbody></table></div>';
 
           body.onclick = function (e) {
-            var ed = e.target.closest('[data-edit]');
-            if (ed) { openEditor(rows.filter(function (r) { return String(r.id) === ed.dataset.edit; })[0]); return; }
-            var de = e.target.closest('[data-del]');
-            if (de) doDelete(de.dataset.del);
+            var t = e.target;
+            if (t.matches('[data-sel]') || t.matches('[data-all]')) return;
+            var th = t.closest('[data-sortkey]');
+            if (th) { cycleSort(th.dataset.sortkey); return; }
+            var mb = t.closest('[data-menu]');
+            if (mb) { openActMenu(mb); return; }
+            var ed = t.closest('[data-edit]');
+            if (ed) { openEditor(byId(ed.dataset.edit)); return; }
+            var de = t.closest('[data-del]');
+            if (de) { doDelete(de.dataset.del); return; }
+            if (opts.onRowClick) {
+              var tr = t.closest('tr[data-id]');
+              if (tr) { var row = byId(tr.dataset.id); if (row) opts.onRowClick(row); }
+            }
           };
-          if (sortable) enableRowSort($('tbody', body), function (ids) {
-            saveOrder(key, ids); logActivity('Reordenó ' + ent.title.toLowerCase());
+          if (allowBulk) body.onchange = function (e) {
+            var t = e.target;
+            if (t.matches('[data-all]')) {
+              view.forEach(function (r) { if (t.checked) sel[r.id] = true; else delete sel[r.id]; });
+              renderBody(); return;
+            }
+            if (t.matches('[data-sel]')) {
+              if (t.checked) sel[t.dataset.sel] = true; else delete sel[t.dataset.sel];
+              var tr = t.closest('tr'); if (tr) tr.classList.toggle('picked', !!sel[t.dataset.sel]);
+              updateBulk();
+            }
+          };
+          if (state.sort === 'position' && sortable) enableRowSort($('tbody', body), function (ids) {
+            saveOrder(key, ids); logActivity('Reordenó ' + title.toLowerCase());
           });
         }
 
-        function reload() { return load(key, { select: '*', order: ent.order }).then(function (r2) { rows = r2; renderBody(); }); }
+        function cycleSort(k) {
+          var cur = state.sort.split(':');
+          var dir = cur[0] === k && cur[1] === 'asc' ? 'desc' : 'asc';
+          state.sort = k + ':' + dir; persist();
+          var s = $('#entSort', mount);
+          if (s) {
+            if (!Array.prototype.some.call(s.options, function (o) { return o.value === state.sort; })) {
+              var o = document.createElement('option'); o.value = state.sort; o.textContent = 'Orden: ' + state.sort; s.appendChild(o);
+            }
+            s.value = state.sort;
+          }
+          renderBody();
+        }
+        function selectedIds() { return Object.keys(sel).filter(function (id) { return sel[id]; }); }
+        function updateBulk() {
+          var bar = $('#entBulk', mount); if (!bar || !allowBulk) return;
+          var ids = selectedIds();
+          if (!ids.length) { bar.hidden = true; bar.innerHTML = ''; return; }
+          bar.hidden = false;
+          bar.innerHTML = '<span class="bulk-count">' + ids.length + ' seleccionado(s)</span>' +
+            (hasHidden ? '<button class="btn sm" data-bulk-hidden="1">Ocultar</button><button class="btn sm" data-bulk-hidden="0">Mostrar</button>' : '') +
+            '<button class="btn sm danger" data-bulk-del>Borrar</button>' +
+            '<span class="toolbar-spacer"></span>' +
+            '<button class="btn sm ghost" data-bulk-clear>Quitar selección</button>';
+        }
+        function bulkHidden(hidden) {
+          var ids = selectedIds(); if (!ids.length || !hasHidden) return;
+          Promise.all(ids.map(function (id) { return SB.update(key, { id: 'eq.' + id }, { hidden: hidden }); }))
+            .then(function () {
+              ids.forEach(function (id) { var r = byId(id); if (r) r.hidden = hidden; });
+              toast(hidden ? 'Ocultados' : 'Mostrados', 'ok');
+              logActivity((hidden ? 'Ocultó ' : 'Mostró ') + ids.length + ' registro(s)');
+              sel = {}; renderBody();
+            }).catch(function (e) { toast(e.message, 'err'); });
+        }
+        function bulkDelete() {
+          var ids = selectedIds(); if (!ids.length) return;
+          confirmDialog('¿Eliminar ' + ids.length + ' registro(s)? No se puede deshacer.', function () {
+            Promise.all(ids.map(function (id) { return SB.remove(key, { id: 'eq.' + id }); }))
+              .then(function () {
+                toast(ids.length + ' eliminado(s)', 'ok');
+                logActivity('Eliminó ' + ids.length + ' ' + ent.title.toLowerCase());
+                sel = {}; invalidate(); reload();
+              }).catch(function (e) { toast(e.message, 'err'); });
+          }, { dangerLabel: 'Eliminar' });
+        }
+
+        function reload() { return load(key, { select: '*', order: ent.order }).then(function (r2) { rows = r2; sel = {}; renderBody(); }); }
 
         function doDelete(id) {
           var row = rows.filter(function (r) { return String(r.id) === id; })[0];
@@ -599,10 +1195,29 @@
         }
 
         function openEditor(row) {
+          if (ent.steps) {
+            openFormWizard({
+              title: (row ? 'Editar ' : 'Nuevo ') + ent.title.toLowerCase(),
+              steps: buildSteps(ent.fields, ent.steps),
+              values: row || { position: rows.length },
+              freeNav: !!row,
+              onSave: function (data) {
+                if (!row) data.store_id = sid();
+                var p = row ? SB.update(key, { id: 'eq.' + row.id }, data) : SB.insert(key, data);
+                return p.then(function () {
+                  closeModal(); invalidate(); toast('Guardado', 'ok');
+                  logActivity((row ? 'Editó ' : 'Creó ') + ent.title.toLowerCase() + ': ' + (data[ent.cols[0].k] || ''));
+                  reload();
+                }).catch(function (e) { toast(e.message, 'err'); });
+              }
+            });
+            return;
+          }
           var formState = {};
           var m = openModal({
             title: (row ? 'Editar ' : 'Nuevo ') + ent.title.toLowerCase(),
             body: '<form id="entForm">' + renderForm(ent.fields, row || { position: rows.length }) + '</form>',
+            guard: true,
             buttons: [
               { label: 'Cancelar', onClick: closeModal },
               { label: 'Guardar', class: 'primary', onClick: save }
@@ -617,55 +1232,97 @@
             var data = readForm(ent.fields, m.body);
             if (!row) data.store_id = sid();
             var p = row ? SB.update(key, { id: 'eq.' + row.id }, data) : SB.insert(key, data);
-            p.then(function () {
+            return p.then(function () {
               closeModal(); invalidate(); toast('Guardado', 'ok');
               logActivity((row ? 'Editó ' : 'Creó ') + ent.title.toLowerCase() + ': ' + (data[ent.cols[0].k] || ''));
               reload();
             }).catch(function (e) { toast(e.message, 'err'); });
           }
         }
-      }).catch(function (e) { mount.innerHTML = '<div class="card empty">Error: ' + esc(e.message) + '</div>'; });
+      }).catch(function (e) { errorState(mount, e, run); });
+    };
+    run();
   }
 
   /* =========================================================
    *  Productos (type = product)
    * ========================================================= */
+  var PRODUCT_BADGES = ['', 'Top Ventas', 'Destacado', 'Nuevo', 'Oferta', 'Popular'];
+
   var PRODUCT_FIELDS = [
-    { k: 'name', l: 'Nombre', req: true },
-    { k: 'sub', l: 'Subtítulo (tarjeta)' },
-    { k: 'price', l: 'Precio', t: 'money', req: true },
-    { k: 'original_price', l: 'Precio anterior (oferta)', t: 'money' },
-    { k: 'badge', l: 'Etiqueta (Top Ventas / Destacado / Nuevo / Oferta / Popular)' },
-    { k: 'category_id', l: 'Categoría', t: 'ref', ref: 'categories' },
-    { k: 'subcategory_id', l: 'Subcategoría', t: 'ref', ref: 'subcategories' },
-    { k: 'image', l: 'Imagen', t: 'image' },
-    { k: 'images', l: 'Galería (una imagen por línea)', t: 'gallery' },
-    { k: 'description', l: 'Descripción', t: 'textarea' },
-    { k: 'featured', l: 'Destacado', t: 'bool' },
-    { k: 'hidden', l: 'Oculto', t: 'bool' },
-    { k: 'position', l: 'Posición', t: 'number' }
+    { k: 'name', l: 'Nombre', req: true, step: 0 },
+    { k: 'sub', l: 'Subtítulo (tarjeta)', step: 0 },
+    { k: 'badge', l: 'Etiqueta', t: 'badge', step: 0 },
+    { k: 'price', l: 'Precio', t: 'money', req: true, step: 1 },
+    { k: 'original_price', l: 'Precio anterior (oferta)', t: 'money', step: 1 },
+    { k: 'position', l: 'Posición', t: 'number', step: 1 },
+    { k: 'image', l: 'Imagen principal', t: 'image', step: 2 },
+    { k: 'images', l: 'Galería', t: 'gallery', step: 2 },
+    { k: 'description', l: 'Descripción', t: 'textarea', help: 'Se muestra en la ficha del producto. Si la dejas vacía, la sección "Descripción" no aparece en la tienda.', step: 2 },
+    { k: 'specs', l: 'Especificaciones técnicas', t: 'specs', help: 'Filas clave/valor de la ficha (Garantía, Condición, Envío…). Si no agregas filas, la sección no aparece.', step: 2 },
+    { k: 'category_id', l: 'Categoría', t: 'ref', ref: 'categories', step: 3 },
+    { k: 'subcategory_id', l: 'Subcategoría', t: 'ref', ref: 'subcategories', step: 3 },
+    { k: 'featured', l: 'Destacado', t: 'bool', step: 3 },
+    { k: 'hidden', l: 'Oculto', t: 'bool', step: 3 }
   ];
 
+  // Metadatos de los pasos del asistente (agrupan PRODUCT_FIELDS por .step).
+  var PRODUCT_STEPS = [
+    { title: 'Identidad', short: 'Identidad', sub: 'Cómo se llama y se presenta el producto.' },
+    { title: 'Precio', short: 'Precio', sub: 'Precio de venta y precio anterior (oferta).' },
+    { title: 'Imágenes y ficha', short: 'Ficha', sub: 'Imagen principal, galería, descripción y especificaciones.' },
+    { title: 'Clasificación', short: 'Clasificar', sub: 'Categoría, destacado y visibilidad en la tienda.' }
+  ];
+
+  // Filas de especificaciones precargadas al crear un producto nuevo.
+  // Son editables; el admin puede completarlas, cambiarlas o quitarlas.
+  var DEFAULT_PRODUCT_SPECS = [
+    { k: 'Modelo', v: '' },
+    { k: 'Resumen técnico', v: '' },
+    { k: 'Condición', v: 'Nuevo · sellado de fábrica' },
+    { k: 'Garantía', v: '12 meses' },
+    { k: 'Disponibilidad', v: 'En stock · zulia' },
+    { k: 'Envío', v: 'A toda Venezuela' }
+  ];
+
+  // Mismo texto que mostraba la ficha antes (editable; si lo vacías, la
+  // sección "Descripción" deja de salir en la tienda).
+  var DEFAULT_PRODUCT_DESCRIPTION = [
+    'Seleccionado por el equipo técnico de MANIAWORLD y probado en banco de pruebas antes de salir a la venta, garantizando rendimiento estable, temperaturas controladas y compatibilidad verificada con los estándares actuales de la industria.',
+    'El producto se entrega nuevo y sellado de fábrica, con su empaque original, manuales, accesorios completos y certificados de cumplimiento. Incluye garantía de 12 meses por fallas de fabricación, asistencia técnica especializada para la instalación y configuración inicial, así como soporte postventa directo por WhatsApp con nuestro personal en zulia.',
+    'MANIAWORLD despacha a domicilio a toda Venezuela: zulia (24-48h), Valencia y Maracaibo (48-72h) y resto del país de 3 a 5 días hábiles. Aceptamos transferencia bancaria, Pago Móvil, Zelle, tarjetas de crédito y débito, así como pago contra entrega en zonas cubiertas. Consulta disponibilidad exacta, descuentos por cantidad y opciones de financiamiento antes de finalizar tu compra.',
+    '¿Dudas sobre compatibilidad con tu equipo actual? Escríbenos antes de comprar y te asesoramos con la instalación, la actualización de firmware y las mejores alternativas de precio dentro del catálogo de la tienda.'
+  ].join('\n\n');
+
   function renderProducts(mount) {
-    renderTyped('product', PRODUCT_FIELDS, 'Productos', mount);
+    renderTyped('product', PRODUCT_FIELDS, 'Productos', mount, false, 'productos');
   }
   function renderCombos(mount) {
-    renderTyped('combo', COMBO_FIELDS, 'Combos', mount, true);
+    renderTyped('combo', COMBO_FIELDS, 'Combos', mount, true, 'combos');
   }
 
   var COMBO_FIELDS = [
-    { k: 'name', l: 'Nombre', req: true },
-    { k: 'sub', l: 'Subtítulo' },
-    { k: 'price', l: 'Precio', t: 'money', req: true },
-    { k: 'badge', l: 'Etiqueta' },
-    { k: 'image', l: 'Imagen (case)', t: 'image' },
-    { k: 'category_id', l: 'Categoría', t: 'ref', ref: 'categories' },
-    { k: 'hidden', l: 'Oculto', t: 'bool' },
-    { k: 'position', l: 'Posición', t: 'number' }
+    { k: 'name', l: 'Nombre', req: true, step: 0 },
+    { k: 'sub', l: 'Subtítulo', step: 0 },
+    { k: 'badge', l: 'Etiqueta', t: 'badge', step: 0 },
+    { k: 'price', l: 'Precio', t: 'money', req: true, step: 1 },
+    { k: 'position', l: 'Posición', t: 'number', step: 1 },
+    { k: 'image', l: 'Imagen (case)', t: 'image', step: 2 },
+    { k: 'images', l: 'Galería (para la imagen del combo)', t: 'gallery', step: 2, help: 'Sube 1 o varias imágenes; luego podrás combinarlas en una sola desde “Piezas e imagen”.' },
+    { k: 'category_id', l: 'Categoría', t: 'ref', ref: 'categories', step: 2 },
+    { k: 'hidden', l: 'Oculto', t: 'bool', step: 2 }
   ];
 
-  function renderTyped(type, fields, title, mount, isCombo) {
+  var COMBO_STEPS = [
+    { title: 'Identidad', short: 'Identidad', sub: 'Nombre y presentación del combo.' },
+    { title: 'Precio', short: 'Precio', sub: 'Precio de venta del combo.' },
+    { title: 'Clasificación', short: 'Clasificar', sub: 'Imagen, categoría y visibilidad.' }
+  ];
+
+  function renderTyped(type, fields, title, mount, isCombo, tabKey) {
     var noun = isCombo ? 'combo' : 'producto';
+    tabKey = tabKey || (isCombo ? 'combos' : 'productos');
+    var run = function () {
     mount.innerHTML = skeleton(5);
     Promise.all([
       S.cache.categories ? null : load('categories', { select: '*', order: 'position.asc,id.asc' }),
@@ -673,7 +1330,14 @@
     ]).then(function () {
       return load('products', { select: '*', type: 'eq.' + type, order: 'position.asc,id.asc' });
     }).then(function (rows) {
-      var state = { q: '', cat: '', status: '', view: 'cards' };
+      var saved = uiGet(tabKey, {});
+      var state = {
+        q: saved.q || '', cat: saved.cat || '', status: saved.status || '',
+        view: saved.view || 'cards', sort: saved.sort || 'position'
+      };
+      var sel = {};
+      if (PENDING[tabKey]) { for (var pk in PENDING[tabKey]) state[pk] = PENDING[tabKey][pk]; PENDING[tabKey] = null; }
+      function persist() { uiSet(tabKey, { q: state.q, cat: state.cat, status: state.status, view: state.view, sort: state.sort }); }
       draw();
 
       function catOptions() {
@@ -682,11 +1346,34 @@
       function searchFields() {
         return ['name', 'sub', 'badge', function (r) { return refName('categories', r.category_id); }];
       }
+      function sortRows(arr) {
+        if (!state.sort || state.sort === 'position') return arr;
+        var parts = state.sort.split(':'), k = parts[0], dir = parts[1] === 'desc' ? -1 : 1;
+        return arr.slice().sort(function (a, b) {
+          var av, bv;
+          if (k === 'category') { av = refName('categories', a.category_id); bv = refName('categories', b.category_id); }
+          else if (k === 'price') { av = Number(a.price) || 0; bv = Number(b.price) || 0; }
+          else if (k === 'status') { av = a.hidden ? 1 : 0; bv = b.hidden ? 1 : 0; }
+          else { av = a[k]; bv = b[k]; }
+          if (typeof av === 'string' || typeof bv === 'string') {
+            av = String(av == null ? '' : av).toLowerCase(); bv = String(bv == null ? '' : bv).toLowerCase();
+            return av < bv ? -dir : av > bv ? dir : 0;
+          }
+          return (av - bv) * dir;
+        });
+      }
       function visibleRows() {
         var v = filterRows(rows, state.q, searchFields());
         if (state.cat) v = v.filter(function (r) { return String(r.category_id) === state.cat; });
         if (state.status) v = v.filter(function (r) { return state.status === 'hidden' ? !!r.hidden : !r.hidden; });
-        return v;
+        if (state.missing === 'image') v = v.filter(function (r) { return !r.image; });
+        return sortRows(v);
+      }
+      function sortOptions() {
+        return [
+          ['position', 'Orden manual'], ['name:asc', 'Nombre ↑'], ['name:desc', 'Nombre ↓'],
+          ['price:asc', 'Precio ↑'], ['price:desc', 'Precio ↓'], ['status', 'Visibles primero']
+        ];
       }
 
       function draw() {
@@ -694,7 +1381,8 @@
           search: true, searchId: 'pQ', placeholder: 'Buscar ' + esc(title.toLowerCase()) + '…',
           filters: [
             { id: 'pCat', options: catOptions() },
-            { id: 'pStatus', options: [['', 'Todos los estados'], ['visible', 'Visibles'], ['hidden', 'Ocultos']] }
+            { id: 'pStatus', options: [['', 'Todos los estados'], ['visible', 'Visibles'], ['hidden', 'Ocultos']] },
+            { id: 'pSort', options: sortOptions() }
           ],
           countId: 'pCount',
           buttons: [
@@ -702,25 +1390,40 @@
             { label: 'Exportar CSV', id: 'csvBtn', class: 'ghost' },
             { label: '+ Nuevo', id: 'newBtn', class: 'primary' }
           ]
-        }) + '<div id="pBody"></div>';
+        }) + '<div id="pBulk" class="bulkbar" hidden></div><div id="pBody"></div>';
         mount.innerHTML = html;
+        $('#pQ', mount).value = state.q;
+        $('#pCat', mount).value = state.cat;
+        $('#pStatus', mount).value = state.status;
+        $('#pSort', mount).value = state.sort;
         renderBody();
-        $('#pQ', mount).addEventListener('input', function () { state.q = this.value; renderBody(); });
-        $('#pCat', mount).addEventListener('change', function () { state.cat = this.value; renderBody(); });
-        $('#pStatus', mount).addEventListener('change', function () { state.status = this.value; renderBody(); });
+        $('#pQ', mount).addEventListener('input', function () { state.q = this.value; persist(); renderBody(); });
+        $('#pCat', mount).addEventListener('change', function () { state.cat = this.value; persist(); renderBody(); });
+        $('#pStatus', mount).addEventListener('change', function () { state.status = this.value; persist(); renderBody(); });
+        $('#pSort', mount).addEventListener('change', function () { state.sort = this.value; persist(); renderBody(); });
         $('#viewBtn', mount).addEventListener('click', function () {
           state.view = state.view === 'cards' ? 'table' : 'cards';
           this.textContent = state.view === 'cards' ? 'Ver lista' : 'Ver tarjetas';
-          renderBody();
+          persist(); renderBody();
         });
         $('#newBtn', mount).addEventListener('click', function () { openEditor(null); });
         $('#csvBtn', mount).addEventListener('click', exportCsv);
+        $('#pBulk', mount).addEventListener('click', function (e) {
+          var h = e.target.closest('[data-bulk-hidden]');
+          if (h) { bulkHidden(h.dataset.bulkHidden === '1'); return; }
+          if (e.target.closest('[data-bulk-del]')) { bulkDelete(); return; }
+          if (e.target.closest('[data-bulk-clear]')) { sel = {}; renderBody(); return; }
+        });
+        $('#pBulk', mount).addEventListener('change', function (e) {
+          if (e.target.matches('[data-bulk-cat]') && e.target.value) bulkCategory(e.target.value);
+        });
       }
 
       function renderBody() {
         var body = $('#pBody', mount);
         var view = visibleRows();
         $('#pCount', mount).textContent = view.length + ' de ' + rows.length + ' ' + esc(title.toLowerCase());
+        updateBulk();
         if (!rows.length) {
           body.innerHTML = emptyState('Sin ' + title.toLowerCase() + ' todavía', 'Añade tu primer ' + noun + ' para mostrarlo en la tienda.', 'Nuevo', 'emptyNew');
           var eb = $('#emptyNew', body); if (eb) eb.addEventListener('click', function () { openEditor(null); });
@@ -731,7 +1434,8 @@
         if (state.view === 'cards') {
           body.innerHTML = '<div class="pcard-grid">' + view.map(function (r) {
             var cat = refName('categories', r.category_id);
-            return '<div class="pcard" data-id="' + esc(r.id) + '">' +
+            return '<div class="pcard' + (sel[r.id] ? ' picked' : '') + '" data-id="' + esc(r.id) + '">' +
+              '<label class="pcard-pick" title="Seleccionar"><input type="checkbox" data-sel="' + esc(r.id) + '"' + (sel[r.id] ? ' checked' : '') + '></label>' +
               '<div class="pcard-img"><img src="' + esc(SB.resolveImage(r.image, 480)) + '" alt="" loading="lazy" decoding="async">' +
                 (r.badge ? '<span class="pcard-badge">' + esc(r.badge) + '</span>' : '') +
                 (r.hidden ? '<span class="pcard-hidden">Oculto</span>' : '') +
@@ -743,43 +1447,56 @@
                   '<div class="pcard-price"><span class="cur">$</span><input class="inline-price" type="text" inputmode="decimal" data-price="' + esc(r.id) + '" value="' + esc(r.price) + '"></div>' +
                   (cat ? '<span class="pcard-cat">' + esc(cat) + '</span>' : '') +
                 '</div>' +
-                '<div class="pcard-actions">' +
-                  '<button class="btn sm" data-edit="' + esc(r.id) + '">Editar</button>' +
-                  (isCombo ? '<button class="btn sm" data-items="' + esc(r.id) + '">Piezas</button>' : '') +
-                  '<button class="btn sm" data-dup="' + esc(r.id) + '">Duplicar</button>' +
-                  '<button class="tag ' + (r.hidden ? 'off' : 'on') + '" data-toggle="' + esc(r.id) + '">' + (r.hidden ? 'Oculto' : 'Visible') + '</button>' +
-                  '<button class="btn sm danger" data-del="' + esc(r.id) + '">Borrar</button>' +
-                '</div>' +
+                '<div class="pcard-actions icon-actions">' + productActions(r, isCombo) + '</div>' +
               '</div></div>';
           }).join('') + '</div>';
         } else {
-          body.innerHTML = '<div class="card" style="padding:0;overflow:auto"><table class="responsive sortable"><thead><tr><th class="drag-h"></th><th></th><th>Nombre</th><th>Precio</th>' +
-            '<th>Categoría</th>' + (isCombo ? '<th>Piezas</th>' : '') + '<th>Estado</th><th></th></tr></thead><tbody>' +
+          var allChecked = view.length && view.every(function (r) { return sel[r.id]; });
+          body.innerHTML = '<div class="card" style="padding:0;overflow:auto"><table class="responsive' + (state.sort === 'position' ? ' sortable' : '') + '"><thead><tr>' +
+            '<th class="pick-h"><input type="checkbox" data-all' + (allChecked ? ' checked' : '') + ' title="Seleccionar todo"></th>' +
+            (state.sort === 'position' ? '<th class="drag-h"></th>' : '') +
+            '<th class="sort-th" data-sortkey="name">Nombre</th><th class="sort-th" data-sortkey="price">Precio</th>' +
+            '<th class="sort-th" data-sortkey="category">Categoría</th>' + (isCombo ? '<th>Piezas</th>' : '') +
+            '<th class="sort-th" data-sortkey="status">Estado</th><th></th></tr></thead><tbody>' +
             view.map(function (r) {
-              return '<tr data-id="' + esc(r.id) + '">' +
-                '<td class="drag-cell" data-label=""><span class="drag-handle" title="Arrastrar para ordenar">⠿</span></td>' +
+              return '<tr data-id="' + esc(r.id) + '"' + (sel[r.id] ? ' class="picked"' : '') + '>' +
+                '<td class="pick-cell" data-label=""><input type="checkbox" data-sel="' + esc(r.id) + '"' + (sel[r.id] ? ' checked' : '') + '></td>' +
+                (state.sort === 'position' ? '<td class="drag-cell" data-label=""><span class="drag-handle" title="Arrastrar para ordenar">⠿</span></td>' : '') +
                 '<td data-label="Imagen"><img class="thumb" src="' + esc(SB.resolveImage(r.image, 96)) + '"></td>' +
                 '<td data-label="Nombre"><strong>' + esc(r.name) + '</strong><div class="muted" style="font-size:12px">' + esc(r.sub || '') + '</div></td>' +
                 '<td data-label="Precio"><input class="inline-price" type="text" inputmode="decimal" data-price="' + esc(r.id) + '" value="' + esc(r.price) + '"></td>' +
                 '<td data-label="Categoría">' + esc(refName('categories', r.category_id)) + '</td>' +
                 (isCombo ? '<td data-label="Piezas" class="muted">—</td>' : '') +
                 '<td data-label="Estado"><button class="tag ' + (r.hidden ? 'off' : 'on') + '" data-toggle="' + esc(r.id) + '">' + (r.hidden ? 'Oculto' : 'Visible') + '</button></td>' +
-                '<td data-label=""><div class="list-actions">' + (isCombo ? '<button class="btn sm" data-items="' + esc(r.id) + '">Piezas</button>' : '') +
-                '<button class="btn sm" data-dup="' + esc(r.id) + '">Duplicar</button>' +
-                '<button class="btn sm" data-edit="' + esc(r.id) + '">Editar</button>' +
-                '<button class="btn sm danger" data-del="' + esc(r.id) + '">Borrar</button></div></td></tr>';
+                '<td data-label=""><div class="list-actions icon-actions">' + productActions(r, isCombo) + '</div></td></tr>';
             }).join('') + '</tbody></table></div>';
 
-          enableRowSort($('tbody', body), function (ids) { saveOrder('products', ids); logActivity('Reordenó ' + title.toLowerCase()); });
+          if (state.sort === 'position') enableRowSort($('tbody', body), function (ids) { saveOrder('products', ids); logActivity('Reordenó ' + title.toLowerCase()); });
         }
 
         body.onclick = function (e) {
           var t = e.target;
+          if (t.matches('[data-sel]') || t.matches('[data-all]')) return;
+          var th = t.closest('[data-sortkey]'); if (th) { cycleSort(th.dataset.sortkey); return; }
+          var mb = t.closest('[data-menu]'); if (mb) { openActMenu(mb); return; }
           var ed = t.closest('[data-edit]'); if (ed) { openEditor(byId(ed.dataset.edit)); return; }
           var de = t.closest('[data-del]'); if (de) { doDelete(de.dataset.del); return; }
           var du = t.closest('[data-dup]'); if (du) { doDuplicate(du.dataset.dup); return; }
           var it = t.closest('[data-items]'); if (it) { openItemsEditor(it.dataset.items, reload); return; }
           var tg = t.closest('[data-toggle]'); if (tg) { toggleHidden(tg.dataset.toggle); return; }
+        };
+        body.onchange = function (e) {
+          var t = e.target;
+          if (t.matches('[data-all]')) {
+            view.forEach(function (r) { if (t.checked) sel[r.id] = true; else delete sel[r.id]; });
+            renderBody(); return;
+          }
+          if (t.matches('[data-sel]')) {
+            if (t.checked) sel[t.dataset.sel] = true; else delete sel[t.dataset.sel];
+            var row = t.closest('tr, .pcard');
+            if (row) row.classList.toggle('picked', !!sel[t.dataset.sel]);
+            updateBulk(); return;
+          }
         };
         $all('[data-price]', body).forEach(function (inp) {
           inp.addEventListener('change', function () { savePrice(inp.dataset.price, inp); });
@@ -787,8 +1504,66 @@
         });
       }
 
+      function cycleSort(k) {
+        var cur = state.sort.split(':');
+        var dir = cur[0] === k && cur[1] === 'asc' ? 'desc' : 'asc';
+        state.sort = k + ':' + dir; persist(); syncSortSelect(); renderBody();
+      }
+      function syncSortSelect() {
+        var s = $('#pSort', mount); if (!s) return;
+        var has = Array.prototype.some.call(s.options, function (o) { return o.value === state.sort; });
+        if (!has) { var o = document.createElement('option'); o.value = state.sort; o.textContent = 'Orden: ' + state.sort; s.appendChild(o); }
+        s.value = state.sort;
+      }
+      function selectedIds() { return Object.keys(sel).filter(function (id) { return sel[id]; }); }
+      function updateBulk() {
+        var bar = $('#pBulk', mount); if (!bar) return;
+        var ids = selectedIds();
+        if (!ids.length) { bar.hidden = true; bar.innerHTML = ''; return; }
+        bar.hidden = false;
+        bar.innerHTML = '<span class="bulk-count">' + ids.length + ' seleccionado(s)</span>' +
+          '<button class="btn sm" data-bulk-hidden="1">Ocultar</button>' +
+          '<button class="btn sm" data-bulk-hidden="0">Mostrar</button>' +
+          (S.cache.categories ? '<select class="filter-select" data-bulk-cat><option value="">Mover a categoría…</option>' +
+            (S.cache.categories || []).map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('') + '</select>' : '') +
+          '<button class="btn sm danger" data-bulk-del>Borrar</button>' +
+          '<span class="toolbar-spacer"></span>' +
+          '<button class="btn sm ghost" data-bulk-clear>Quitar selección</button>';
+      }
+      function bulkHidden(hidden) {
+        var ids = selectedIds(); if (!ids.length) return;
+        Promise.all(ids.map(function (id) { return SB.update('products', { id: 'eq.' + id }, { hidden: hidden }); }))
+          .then(function () {
+            ids.forEach(function (id) { var r = byId(id); if (r) r.hidden = hidden; });
+            toast(hidden ? 'Ocultados' : 'Mostrados', 'ok');
+            logActivity((hidden ? 'Ocultó ' : 'Mostró ') + ids.length + ' ' + noun + '(s)');
+            sel = {}; renderBody();
+          }).catch(function (e) { toast(e.message, 'err'); });
+      }
+      function bulkCategory(cid) {
+        var ids = selectedIds(); if (!ids.length) return;
+        Promise.all(ids.map(function (id) { return SB.update('products', { id: 'eq.' + id }, { category_id: cid }); }))
+          .then(function () {
+            ids.forEach(function (id) { var r = byId(id); if (r) r.category_id = cid; });
+            toast('Categoría actualizada', 'ok');
+            logActivity('Movió ' + ids.length + ' ' + noun + '(s) de categoría');
+            sel = {}; renderBody();
+          }).catch(function (e) { toast(e.message, 'err'); });
+      }
+      function bulkDelete() {
+        var ids = selectedIds(); if (!ids.length) return;
+        confirmDialog('¿Eliminar ' + ids.length + ' ' + noun + '(s)? No se puede deshacer.', function () {
+          Promise.all(ids.map(function (id) { return SB.remove('products', { id: 'eq.' + id }); }))
+            .then(function () {
+              toast(ids.length + ' eliminado(s)', 'ok');
+              logActivity('Eliminó ' + ids.length + ' ' + noun + '(s)');
+              sel = {}; invalidate(); reload();
+            }).catch(function (e) { toast(e.message, 'err'); });
+        }, { dangerLabel: 'Eliminar' });
+      }
+
       function byId(id) { return rows.filter(function (r) { return String(r.id) === String(id); })[0]; }
-      function reload() { return load('products', { select: '*', type: 'eq.' + type, order: 'position.asc,id.asc' }).then(function (r2) { rows = r2; renderBody(); }); }
+      function reload() { return load('products', { select: '*', type: 'eq.' + type, order: 'position.asc,id.asc' }).then(function (r2) { rows = r2; sel = {}; renderBody(); }); }
 
       function savePrice(id, inp) {
         var raw = String(inp.value).replace(',', '.').replace(/[^0-9.\-]/g, '').trim();
@@ -833,107 +1608,374 @@
       }
 
       function openEditor(row) {
-        var formState = {};
-        var extra = isCombo ? comboMetaHtml(row) : '';
-        var m = openModal({
-          title: (row ? 'Editar ' : 'Nuevo ') + noun,
-          body: '<form id="entForm">' + renderForm(fields, row || { position: rows.length, price: 0 }) + extra + '</form>',
-          buttons: [
-            { label: 'Cancelar', onClick: closeModal },
-            { label: 'Guardar', class: 'primary', onClick: save }
-          ]
-        });
-        wireForm(fields, m.body, formState);
-
-        function save() {
-          if (formState.uploading) return toast('Espera: subiendo imagen…', 'err');
-          var form = $('#entForm', m.body);
-          if (!form.reportValidity()) return;
-          var data = readForm(fields, m.body);
-          data.type = type;
-          if (isCombo) {
-            data.meta = {
-              cpu_line1: val(m.body, 'cpu_line1'),
-              cpu_line2: val(m.body, 'cpu_line2'),
-              tag: val(m.body, 'tag')
-            };
-            if (!data.category_id) data.category_id = null;
-          }
-          if (!row) data.store_id = sid();
-          var p = row ? SB.update('products', { id: 'eq.' + row.id }, data) : SB.insert('products', data);
-          p.then(function () {
-            closeModal(); invalidate(); toast('Guardado', 'ok');
-            logActivity((row ? 'Editó ' : 'Creó ') + noun + ': ' + data.name);
-            reload();
-          }).catch(function (e) { toast(e.message, 'err'); });
+        var values = row || { position: rows.length, price: 0, specs: isCombo ? [] : DEFAULT_PRODUCT_SPECS, description: isCombo ? '' : DEFAULT_PRODUCT_DESCRIPTION };
+        var steps = buildSteps(fields, isCombo ? COMBO_STEPS : PRODUCT_STEPS);
+        if (isCombo) {
+          steps.push({ title: 'Textos del combo', short: 'Textos', sub: 'Líneas de CPU y etiqueta que aparecen en la tarjeta del combo.', html: comboMetaHtml(row) });
         }
+        steps.push({ title: 'Revisar', short: 'Revisar', sub: 'Así se verá la tarjeta en la tienda.', review: true });
+        openFormWizard({
+          title: (row ? 'Editar ' : 'Nuevo ') + noun,
+          steps: steps,
+          values: values,
+          freeNav: !!row,
+          reviewHtml: '<div class="review-pane" id="wizPreview"></div>',
+          onSave: function (data, m) {
+            data.type = type;
+            if (isCombo) {
+              data.meta = (row && row.meta) || {};
+              data.meta.cpu_line1 = val(m.body, 'cpu_line1');
+              data.meta.cpu_line2 = val(m.body, 'cpu_line2');
+              data.meta.tag = val(m.body, 'tag');
+              if (!data.category_id) data.category_id = null;
+            }
+            if (!row) data.store_id = sid();
+            var p = row ? SB.update('products', { id: 'eq.' + row.id }, data) : SB.insert('products', data);
+            return p.then(function () {
+              closeModal(); invalidate(); toast('Guardado', 'ok');
+              logActivity((row ? 'Editó ' : 'Creó ') + noun + ': ' + data.name);
+              reload();
+            }).catch(function (e) { toast(e.message, 'err'); });
+          }
+        });
       }
-    }).catch(function (e) { mount.innerHTML = '<div class="card empty">Error: ' + esc(e.message) + '</div>'; });
+    }).catch(function (e) { errorState(mount, e, run); });
+    };
+    run();
   }
 
   function val(root, name) { var n = root.querySelector('[name="' + name + '"]'); return n ? n.value.trim() : ''; }
   function clampNum(v, d, lo, hi) { v = parseFloat(v); if (isNaN(v)) v = d; return Math.min(hi, Math.max(lo, v)); }
   function comboMetaHtml(row) {
     var meta = (row && row.meta) || {};
-    return '<hr style="border:0;border-top:1px solid var(--border);margin:18px 0">' +
-      '<p class="mt0 muted" style="font-size:12.5px">Textos del combo (líneas de CPU y etiqueta):</p>' +
+    return '<div class="fgrid">' +
       '<div class="field"><label>Línea 1 (CPU)</label><input type="text" name="cpu_line1" value="' + esc(meta.cpu_line1 || '') + '"></div>' +
       '<div class="field"><label>Línea 2</label><input type="text" name="cpu_line2" value="' + esc(meta.cpu_line2 || '') + '"></div>' +
-      '<div class="field mb0"><label>Etiqueta (tag)</label><input type="text" name="tag" value="' + esc(meta.tag || '') + '"></div>';
+      '<div class="field full mb0"><label>Etiqueta (tag)</label><input type="text" name="tag" value="' + esc(meta.tag || '') + '"></div>' +
+      '</div>';
   }
   function fillComboMeta() { /* placeholders ya renderizados por comboMetaHtml */ }
 
   function openItemsEditor(comboId, after) {
-    var m = openModal({ title: 'Piezas del combo', body: '<div class="loading"><span class="spinner"></span> Cargando…</div>',
-      buttons: [{ label: 'Cerrar', onClick: closeModal }] });
-    Promise.all([
-      S.cache.products ? null : load('products', { select: 'id,name,type,price', order: 'name.asc' }),
-      load('combo_items', { select: '*', combo_id: 'eq.' + comboId, order: 'position.asc' })
-    ]).then(function (r) {
-      var links = r[1] || [];
-      var prods = (S.cache.products || []).filter(function (p) { return p.type !== 'combo'; });
-      draw();
-
-      function draw() {
-        var opts = prods.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' — ' + money(p.price) + '</option>'; }).join('');
-        var html = '<div class="field"><label>Añadir producto real al combo</label><div style="display:flex;gap:8px">' +
-          '<select id="pickProd" style="flex:1">' + opts + '</select>' +
-          '<input type="number" id="pickQty" value="1" min="1" style="width:80px">' +
-          '<button class="btn primary" id="addLink">Añadir</button></div></div><hr style="border:0;border-top:1px solid var(--border);margin:14px 0">';
-        html += '<div id="linkList">' + (links.length ? links.map(function (l) {
-          var p = prods.filter(function (x) { return String(x.id) === String(l.product_id); })[0] || { name: '(producto eliminado)' };
-          return '<div class="chip" style="margin:0 6px 8px 0">' + esc(p.name) + ' × ' + l.qty +
-            ' <button data-rm="' + esc(l.id) + '">✕</button></div>';
-        }).join('') : '<p class="muted">Sin piezas enlazadas.</p>') + '</div>';
-        m.body.innerHTML = html;
-
-        $('#addLink', m.body).addEventListener('click', function () {
-          var pid = $('#pickProd', m.body).value;
-          var qty = Number($('#pickQty', m.body).value) || 1;
-          if (!pid) return;
-          SB.insert('combo_items', { combo_id: Number(comboId), product_id: Number(pid), qty: qty, position: links.length, store_id: sid() })
-            .then(function () {
-              return load('combo_items', { select: '*', combo_id: 'eq.' + comboId, order: 'position.asc' });
-            }).then(function (rows) { links = rows; invalidate(); draw(); after && after(); toast('Añadido', 'ok'); })
-            .catch(function (e) { toast(e.message, 'err'); });
-        });
-        $all('[data-rm]', m.body).forEach(function (b) {
-          b.addEventListener('click', function () {
-            SB.remove('combo_items', { id: 'eq.' + b.dataset.rm }).then(function () {
-              links = links.filter(function (l) { return String(l.id) !== b.dataset.rm; });
-              invalidate(); draw(); after && after(); toast('Quitado', 'ok');
-            }).catch(function (e) { toast(e.message, 'err'); });
-          });
-        });
-      }
+    var m = openModal({
+      title: 'Piezas e imagen del combo', size: 'lg',
+      body: '<div class="loading"><span class="spinner"></span> Cargando…</div>',
+      buttons: [{ label: 'Cerrar', onClick: function () { closeModal(); after && after(); } }]
     });
+    var st = { prods: [], links: [], combo: null, layers: [], base: '', sources: [], tab: 'piezas', sel: -1 };
+    Promise.all([
+      load('products', { select: 'id,name,type,price,image,hidden', order: 'name.asc' }),
+      load('combo_items', { select: '*', combo_id: 'eq.' + comboId, order: 'position.asc' }),
+      load('products', { select: 'id,name,image,images,meta,type', id: 'eq.' + comboId })
+    ]).then(function (r) {
+      st.prods = (r[0] || []).filter(function (p) { return p.type !== 'combo'; });
+      st.links = r[1] || [];
+      st.combo = (r[2] && r[2][0]) || null;
+      var meta = (st.combo && st.combo.meta) || {};
+      st.layers = Array.isArray(meta.layers) ? meta.layers.slice() : [];
+      st.base = (st.combo && st.combo.image) || '';
+      draw();
+    }).catch(function (e) { m.body.innerHTML = '<div class="card empty">Error: ' + esc(e.message) + '</div>'; });
+
+    function prodById(id) { for (var i = 0; i < st.prods.length; i++) if (String(st.prods[i].id) === String(id)) return st.prods[i]; return null; }
+    function reloadLinks() {
+      return load('combo_items', { select: '*', combo_id: 'eq.' + comboId, order: 'position.asc' }).then(function (rows) { st.links = rows || []; });
+    }
+    function saveLayers() {
+      var meta = (st.combo && st.combo.meta) || {};
+      meta.layers = st.layers;
+      return SB.update('products', { id: 'eq.' + comboId }, { meta: meta }).then(function () { if (st.combo) st.combo.meta = meta; invalidate(); });
+    }
+
+    function draw() {
+      var tabs = '<div class="subnav" role="tablist">' +
+        '<button class="subnav-btn' + (st.tab === 'piezas' ? ' active' : '') + '" data-studio="piezas" type="button">Piezas del combo</button>' +
+        '<button class="subnav-btn' + (st.tab === 'imagen' ? ' active' : '') + '" data-studio="imagen" type="button">Imagen del combo</button></div>';
+      m.body.innerHTML = tabs + (st.tab === 'piezas' ? piezasHtml() : imagenHtml());
+      $all('[data-studio]', m.body).forEach(function (b) {
+        b.addEventListener('click', function () { st.tab = b.dataset.studio; draw(); });
+      });
+      if (st.tab === 'piezas') wirePiezas(); else wireImagen();
+    }
+
+    /* ---------------- Piezas ---------------- */
+    function piezasHtml() {
+      var opts = st.prods.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' — ' + money(p.price) + '</option>'; }).join('');
+      var list = st.links.length ? st.links.map(function (l, i) {
+        var p = prodById(l.product_id) || { name: '(producto eliminado)', price: 0, image: '' };
+        return '<div class="piece-row" data-l="' + esc(l.id) + '">' +
+          '<img class="piece-thumb" src="' + esc(SB.resolveImage(p.image, 80)) + '" alt="">' +
+          '<div class="piece-meta"><div class="piece-name">' + esc(p.name) + '</div>' +
+            '<div class="piece-sub">' + money(p.price) + (p.hidden ? ' · solo en el combo' : '') + '</div></div>' +
+          '<input class="piece-qty" type="number" min="1" data-qty="' + esc(l.id) + '" value="' + esc(l.qty) + '" title="Cantidad">' +
+          '<button type="button" class="act-btn" data-up="' + i + '" title="Subir"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+          '<button type="button" class="act-btn" data-down="' + i + '" title="Bajar"' + (i === st.links.length - 1 ? ' disabled' : '') + '>↓</button>' +
+          '<button type="button" class="act-btn act-del" data-rm="' + esc(l.id) + '" title="Quitar">' + ICO.trash + '</button>' +
+        '</div>';
+      }).join('') : '<p class="muted">Sin piezas todavía. Añade productos de la tienda o crea piezas nuevas.</p>';
+
+      return '<div class="card pz"><h3>Productos del combo</h3>' +
+        '<p class="desc">Vende productos que ya tienes, o crea “piezas” que <strong>solo existen dentro de este combo</strong> (no se muestran en la tienda).</p>' +
+        '<div class="field"><label>Añadir producto de la tienda</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+          '<select id="pickProd" style="flex:1;min-width:200px">' + opts + '</select>' +
+          '<input type="number" id="pickQty" value="1" min="1" style="width:70px">' +
+          '<button class="btn primary" id="addLink" type="button">Añadir</button></div></div>' +
+        '<details class="piece-new"><summary>＋ Crear pieza nueva (no se muestra en la tienda)</summary>' +
+          '<div class="fgrid" style="margin-top:10px">' +
+            '<div class="field"><label>Nombre</label><input type="text" id="npName" placeholder="Ej. Monitor 24&rdquo; 165Hz"></div>' +
+            '<div class="field"><label>Precio</label><input type="text" inputmode="decimal" id="npPrice" placeholder="0"></div>' +
+            '<div class="field full"><label>Imagen</label><input type="file" accept="image/*" id="npImg"></div>' +
+          '</div><button class="btn primary" id="createPiece" type="button">Crear y añadir</button></details>' +
+        '</div>' +
+        '<div class="card pz"><h3>Piezas (' + st.links.length + ')</h3><div class="piece-list">' + list + '</div></div>';
+    }
+    function wirePiezas() {
+      var add = $('#addLink', m.body);
+      if (add) add.addEventListener('click', function () {
+        var pid = $('#pickProd', m.body).value; var qty = Number($('#pickQty', m.body).value) || 1;
+        if (!pid) return;
+        add.disabled = true;
+        SB.insert('combo_items', { combo_id: Number(comboId), product_id: Number(pid), qty: qty, position: st.links.length, store_id: sid() })
+          .then(reloadLinks).then(function () { invalidate(); draw(); toast('Añadido', 'ok'); })
+          .catch(function (e) { toast(e.message, 'err'); add.disabled = false; });
+      });
+      var create = $('#createPiece', m.body);
+      if (create) create.addEventListener('click', function () {
+        var name = $('#npName', m.body).value.trim(); var price = parseFloat($('#npPrice', m.body).value) || 0;
+        var file = $('#npImg', m.body).files[0];
+        if (!name) return toast('Ponle nombre a la pieza', 'err');
+        create.disabled = true;
+        var up = file ? SB.upload('catalog', file) : Promise.resolve('');
+        up.then(function (url) {
+          return SB.insert('products', { store_id: sid(), type: 'product', name: name, price: price, image: url || '', hidden: true, position: 0 });
+        }).then(function (rows) {
+          var pid = Array.isArray(rows) && rows[0] ? rows[0].id : rows && rows.id;
+          return SB.insert('combo_items', { combo_id: Number(comboId), product_id: Number(pid), qty: 1, position: st.links.length, store_id: sid() });
+        }).then(function () { return load('products', { select: 'id,name,type,price,image,hidden', order: 'name.asc' }); })
+          .then(function (r0) { st.prods = (r0 || []).filter(function (p) { return p.type !== 'combo'; }); return reloadLinks(); })
+          .then(function () { invalidate(); draw(); toast('Pieza creada', 'ok'); })
+          .catch(function (e) { toast(e.message, 'err'); create.disabled = false; });
+      });
+      $all('[data-qty]', m.body).forEach(function (inp) {
+        inp.addEventListener('change', function () {
+          var q = Math.max(1, Number(inp.value) || 1);
+          SB.update('combo_items', { id: 'eq.' + inp.dataset.qty }, { qty: q }).then(function () { toast('Cantidad actualizada', 'ok'); }).catch(function (e) { toast(e.message, 'err'); });
+        });
+      });
+      $all('[data-rm]', m.body).forEach(function (b) {
+        b.addEventListener('click', function () {
+          SB.remove('combo_items', { id: 'eq.' + b.dataset.rm }).then(reloadLinks).then(function () { invalidate(); draw(); toast('Quitado', 'ok'); }).catch(function (e) { toast(e.message, 'err'); });
+        });
+      });
+      $all('[data-up],[data-down]', m.body).forEach(function (b) {
+        b.addEventListener('click', function () {
+          var i = Number(b.dataset.up || b.dataset.down);
+          var j = b.dataset.up ? i - 1 : i + 1;
+          if (j < 0 || j >= st.links.length) return;
+          var a = st.links.slice(); var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+          Promise.all(a.map(function (l, k) { return SB.update('combo_items', { id: 'eq.' + l.id }, { position: k }); }))
+            .then(reloadLinks).then(function () { invalidate(); draw(); }).catch(function (e) { toast(e.message, 'err'); });
+        });
+      });
+    }
+
+    /* ---------------- Imagen (compositor por capas) ---------------- */
+    function buildSources() {
+      var out = [];
+      if (st.base) out.push({ src: st.base, label: 'Imagen principal', isBase: true });
+      (st.combo && st.combo.images || []).forEach(function (u) { if (u && u !== st.base) out.push({ src: u, label: 'Galería' }); });
+      st.links.forEach(function (l) { var p = prodById(l.product_id); if (p && p.image && p.image !== st.base) out.push({ src: p.image, label: p.name, product_id: p.id }); });
+      st.sources = out;
+      return out;
+    }
+    function imagenHtml() {
+      var srcs = buildSources();
+      var srcHtml = srcs.length ? srcs.map(function (s, i) {
+        return '<div class="src-chip"><img src="' + esc(SB.resolveImage(s.src, 80)) + '" alt="">' +
+          '<span>' + esc(s.label) + '</span>' +
+          '<button type="button" class="btn sm" data-addsrc="' + i + '">＋ capa</button>' +
+          (s.isBase ? '' : '<button type="button" class="btn sm ghost" data-setbase="' + i + '">Base</button>') + '</div>';
+      }).join('') : '<p class="muted">No hay imágenes. Sube imágenes en el paso “Clasificación” o añade piezas con imagen.</p>';
+
+      var stage = '<div class="composer-stage" id="cStage">' +
+        (st.base ? '<img class="c-base" src="' + esc(SB.resolveImage(st.base, 720)) + '" alt="" draggable="false">' : '<div class="c-empty">Elige una imagen “Base”.</div>') +
+        st.layers.map(function (L, i) {
+          return '<img class="c-layer' + (st.sel === i ? ' sel' : '') + '" data-layer="' + i + '" draggable="false" src="' + esc(SB.resolveImage(L.src, 400)) + '" ' +
+            'style="left:' + (Number(L.x) || 0) + '%;top:' + (Number(L.y) || 0) + '%;width:' + (Number(L.w) || 40) + '%;z-index:' + (Number(L.z) || 1) + '">';
+        }).join('') +
+        '</div>';
+
+      var sel = st.sel >= 0 ? st.layers[st.sel] : null;
+      var ctrls = '<div class="composer-controls">' +
+        (sel ? '<span class="muted">Capa ' + (st.sel + 1) + '</span>' +
+          '<label class="cl">Tamaño <input type="range" min="5" max="120" value="' + (Number(sel.w) || 40) + '" data-size></label>' +
+          '<button type="button" class="btn sm" data-z="1">Traer al frente</button>' +
+          '<button type="button" class="btn sm" data-z="-1">Enviar atrás</button>' +
+          '<button type="button" class="btn sm danger" data-rmlayer>Quitar capa</button>'
+          : '<span class="muted">Toca una capa en el lienzo para moverla, cambiar su tamaño u orden.</span>') +
+        '</div>';
+
+      return '<div class="card"><h3>Compositor de imagen</h3>' +
+        '<p class="desc">La <strong>imagen principal</strong> es la base (ej. el case). Añade las piezas como capas encima, arrástralas sobre el lienzo, cámbiales el tamaño y el orden (z). Al terminar, genera una sola imagen.</p>' +
+        '<div class="composer"><div class="composer-aside"><div class="src-list">' + srcHtml + '</div></div>' +
+        '<div class="composer-main">' + stage + ctrls +
+        '<div class="composer-actions"><button type="button" class="btn" id="saveLayers">Guardar disposición</button>' +
+        '<button type="button" class="btn primary" id="genImage">Generar imagen del combo</button></div></div></div></div>';
+    }
+    function wireImagen() {
+      var stage = $('#cStage', m.body);
+      if (!stage) return;
+      $all('[data-addsrc]', m.body).forEach(function (b) {
+        b.addEventListener('click', function () {
+          var s = st.sources[Number(b.dataset.addsrc)]; if (!s) return;
+          var n = st.layers.length;
+          st.layers.push({ src: s.src, x: 20 + (n % 4) * 12, y: 20 + (n % 4) * 12, w: 42, z: n + 1, product_id: s.product_id });
+          st.sel = st.layers.length - 1; draw();
+        });
+      });
+      $all('[data-setbase]', m.body).forEach(function (b) {
+        b.addEventListener('click', function () {
+          var s = st.sources[Number(b.dataset.setbase)]; if (!s) return;
+          st.base = s.src;
+          SB.update('products', { id: 'eq.' + comboId }, { image: s.src }).then(function () { invalidate(); toast('Base actualizada', 'ok'); draw(); }).catch(function (e) { toast(e.message, 'err'); });
+        });
+      });
+      stage.addEventListener('pointerdown', function (e) {
+        var im = e.target.closest('[data-layer]'); if (!im) return;
+        e.preventDefault();
+        var idx = Number(im.dataset.layer), L = st.layers[idx];
+        st.sel = idx;
+        $all('.c-layer', stage).forEach(function (x) { x.classList.toggle('sel', x === im); });
+        var rect = stage.getBoundingClientRect();
+        var sx = e.clientX, sy = e.clientY, ox = Number(L.x) || 0, oy = Number(L.y) || 0;
+        function move(ev) {
+          L.x = Math.round(Math.max(-20, Math.min(100, ox + (ev.clientX - sx) / rect.width * 100)));
+          L.y = Math.round(Math.max(-20, Math.min(100, oy + (ev.clientY - sy) / rect.height * 100)));
+          im.style.left = L.x + '%'; im.style.top = L.y + '%';
+        }
+        function up() { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); refreshControls(); }
+        document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+      });
+      function refreshControls() {
+        var c = $('.composer-controls', m.body); if (!c) return;
+        var sel = st.layers[st.sel];
+        c.innerHTML = sel ? '<span class="muted">Capa ' + (st.sel + 1) + '</span>' +
+          '<label class="cl">Tamaño <input type="range" min="5" max="120" value="' + (Number(sel.w) || 40) + '" data-size></label>' +
+          '<button type="button" class="btn sm" data-z="1">Traer al frente</button>' +
+          '<button type="button" class="btn sm" data-z="-1">Enviar atrás</button>' +
+          '<button type="button" class="btn sm danger" data-rmlayer>Quitar capa</button>'
+          : '<span class="muted">Toca una capa en el lienzo para moverla, cambiar su tamaño u orden.</span>';
+        bindControls();
+      }
+      function bindControls() {
+        var size = $('[data-size]', m.body);
+        if (size) size.addEventListener('input', function () { var sel = st.layers[st.sel]; if (!sel) return; sel.w = Number(size.value); var el = $('.c-layer[data-layer="' + st.sel + '"]', stage); if (el) el.style.width = sel.w + '%'; });
+        var zf = $('[data-z="1"]', m.body); if (zf) zf.addEventListener('click', function () { var sel = st.layers[st.sel]; if (!sel) return; sel.z = (Number(sel.z) || 1) + 1; var el = $('.c-layer[data-layer="' + st.sel + '"]', stage); if (el) el.style.zIndex = sel.z; });
+        var zb = $('[data-z="-1"]', m.body); if (zb) zb.addEventListener('click', function () { var sel = st.layers[st.sel]; if (!sel) return; sel.z = Math.max(1, (Number(sel.z) || 1) - 1); var el = $('.c-layer[data-layer="' + st.sel + '"]', stage); if (el) el.style.zIndex = sel.z; });
+        var rm = $('[data-rmlayer]', m.body); if (rm) rm.addEventListener('click', function () { if (st.sel < 0) return; st.layers.splice(st.sel, 1); st.sel = -1; draw(); });
+      }
+      bindControls();
+      var save = $('#saveLayers', m.body);
+      if (save) save.addEventListener('click', function () { save.disabled = true; saveLayers().then(function () { toast('Disposición guardada', 'ok'); save.disabled = false; }).catch(function (e) { toast(e.message, 'err'); save.disabled = false; }); });
+      var gen = $('#genImage', m.body);
+      if (gen) gen.addEventListener('click', function () {
+        if (!st.base) return toast('Elige una imagen base', 'err');
+        gen.disabled = true; toast('Generando imagen…');
+        bakeImage(st.base, st.layers, function (blob, err) {
+          if (!blob) { toast('No se pudo generar: ' + (err && err.message || 'error'), 'err'); gen.disabled = false; return; }
+          var file = new File([blob], 'combo-' + Date.now() + '.png', { type: 'image/png' });
+          SB.upload('catalog', file).then(function (url) {
+            st.composite = url;
+            var meta = (st.combo && st.combo.meta) || {};
+            meta.layers = st.layers; meta.composite = url;
+            return SB.update('products', { id: 'eq.' + comboId }, { meta: meta }).then(function () { if (st.combo) st.combo.meta = meta; });
+          }).then(function () { invalidate(); toast('Imagen del combo generada', 'ok'); draw(); })
+            .catch(function (e) { toast(e.message, 'err'); gen.disabled = false; });
+        });
+      });
+    }
   }
+
+  // Compone una imagen (base + capas) en un canvas y devuelve un Blob PNG.
+  function bakeImage(base, layers, cb) {
+    function loadImg(src) {
+      return new Promise(function (res, rej) {
+        var im = new Image(); im.crossOrigin = 'anonymous';
+        im.onload = function () { res(im); }; im.onerror = function () { rej(new Error('imagen')); };
+        im.src = src;
+      });
+    }
+    function abs(src) {
+      if (!src) return '';
+      if (/^(https?:|data:)/i.test(src)) return src;
+      var u = SB.resolveImage(src, 0);
+      if (/^https?:/i.test(u)) return u;
+      try { return new URL(src.replace(/^\.?\//, ''), location.href).href; } catch (e) { return u; }
+    }
+    var SIZE = 1200;
+    var canvas = document.createElement('canvas'); canvas.width = SIZE; canvas.height = SIZE;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, SIZE, SIZE);
+    var chain = Promise.resolve();
+    if (base) chain = chain.then(function () { return loadImg(abs(base)); }).then(function (im) {
+      var s = Math.max(SIZE / im.width, SIZE / im.height);
+      var w = im.width * s, h = im.height * s;
+      ctx.drawImage(im, (SIZE - w) / 2, (SIZE - h) / 2, w, h);
+    });
+    layers.slice().sort(function (a, b) { return (Number(a.z) || 0) - (Number(b.z) || 0); }).forEach(function (L) {
+      chain = chain.then(function () { return loadImg(abs(L.src)); }).then(function (im) {
+        var w = SIZE * (Number(L.w) || 40) / 100, h = w * im.height / im.width;
+        ctx.drawImage(im, SIZE * (Number(L.x) || 0) / 100, SIZE * (Number(L.y) || 0) / 100, w, h);
+      }).catch(function () {});
+    });
+    chain.then(function () {
+      try { canvas.toBlob(function (b) { cb(b, b ? null : new Error('toBlob')); }, 'image/png'); }
+      catch (e) { cb(null, e); }
+    }).catch(function (e) { cb(null, e); });
+  }
+
 
   /* =========================================================
    *  Home / Contenido (settings.data)
    * ========================================================= */
   function getSettings() {
     return load('settings', { select: 'data' }).then(function (r) { return (r[0] && r[0].data) || {}; });
+  }
+
+  /* Horario semanal (settings.store.schedule). Cada día: {c:cerrado, o:'HH:MM', x:'HH:MM'} */
+  var SCHED_DAYS = [['mon', 'Lunes'], ['tue', 'Martes'], ['wed', 'Miércoles'], ['thu', 'Jueves'], ['fri', 'Viernes'], ['sat', 'Sábado'], ['sun', 'Domingo']];
+  function scheduleHtml(sch) {
+    sch = sch || {};
+    return '<div class="sched-grid">' + SCHED_DAYS.map(function (d) {
+      var s = sch[d[0]] || {};
+      return '<div class="sched-row" data-day="' + d[0] + '">' +
+        '<label class="check"><input type="checkbox" data-sch="c"' + (s.c ? ' checked' : '') + '><span>' + d[1] + '</span></label>' +
+        '<input type="time" data-sch="o" value="' + esc(s.o || '') + '">' +
+        '<span class="muted">a</span>' +
+        '<input type="time" data-sch="x" value="' + esc(s.x || '') + '"></div>';
+    }).join('') + '</div>';
+  }
+  function readSchedule(root) {
+    var sch = {};
+    $all('.sched-row', root).forEach(function (row) {
+      sch[row.dataset.day] = {
+        c: row.querySelector('[data-sch="c"]').checked,
+        o: row.querySelector('[data-sch="o"]').value,
+        x: row.querySelector('[data-sch="x"]').value
+      };
+    });
+    return sch;
+  }
+  function applySchedule(root, sch) {
+    sch = sch || {};
+    SCHED_DAYS.forEach(function (d) {
+      var row = root.querySelector('.sched-row[data-day="' + d[0] + '"]');
+      if (!row) return;
+      var s = sch[d[0]] || {};
+      row.querySelector('[data-sch="c"]').checked = !!s.c;
+      row.querySelector('[data-sch="o"]').value = s.o || '';
+      row.querySelector('[data-sch="x"]').value = s.x || '';
+    });
   }
 
   function homeDraftKey() { return 'gh_home_draft_' + sid(); }
@@ -946,6 +1988,7 @@
     $all('[data-set]', mount).forEach(function (n) { d.set[n.dataset.set] = n.value; });
     d.st = $('#st_open', mount) ? $('#st_open', mount).checked : undefined;
     d.closed = $('#st_closed', mount) ? $('#st_closed', mount).value : '';
+    d.schedule = mount.querySelector('.sched-row') ? readSchedule(mount) : undefined;
     d.pay = $('#payMethods', mount) ? $('#payMethods', mount).value : '';
     d.msg = $('#msgTpl', mount) ? $('#msgTpl', mount).value : '';
     d.contact = $('#contactTpl', mount) ? $('#contactTpl', mount).value : '';
@@ -963,6 +2006,7 @@
     Object.keys(d.set || {}).forEach(function (k) { var n = mount.querySelector('[data-set="' + k + '"]'); if (n) n.value = d.set[k]; });
     if (d.st != null && $('#st_open', mount)) $('#st_open', mount).checked = d.st;
     if (d.closed != null && $('#st_closed', mount)) $('#st_closed', mount).value = d.closed;
+    if (d.schedule) applySchedule(mount, d.schedule);
     if (d.pay != null && $('#payMethods', mount)) $('#payMethods', mount).value = d.pay;
     if (d.msg != null && $('#msgTpl', mount)) $('#msgTpl', mount).value = d.msg;
     if (d.contact != null && $('#contactTpl', mount)) $('#contactTpl', mount).value = d.contact;
@@ -985,26 +2029,29 @@
     getSettings().then(function (s) {
       var store = s.store || {}, hero = s.hero || {}, texts = s.texts || {}, sections = s.sections || [];
       var logo = store.logo || hero.logo || '';
-      var html = '<form id="homeForm">';
-      html += '<div class="card"><h3>Logo de la tienda</h3><p class="desc">Se muestra en el encabezado de todas las páginas y en la portada. Sube una imagen o pega una ruta/URL.</p>' +
+      var cardLogo = '<div class="card"><h3>Logo de la tienda</h3><p class="desc">Se muestra en el encabezado de todas las páginas y en la portada. Sube una imagen o pega una ruta/URL.</p>' +
         fieldHtml({ k: 'logo', l: 'Logo', t: 'image', help: 'PNG, WEBP o SVG con fondo transparente.' }, logo) +
         '<div class="check" style="margin-top:10px"><input type="checkbox" id="hero_show"' + (hero.showLogo !== false ? ' checked' : '') + '><span>Mostrar el logo en la portada</span></div></div>';
-      html += '<div class="card"><h3>Tienda</h3><p class="desc">Datos generales y de contacto.</p><div class="row">' +
+      var cardStore = '<div class="card"><h3>Tienda</h3><p class="desc">Datos generales y de contacto.</p><div class="row">' +
         fld('store.name', 'Nombre', store.name) + fld('store.whatsapp', 'WhatsApp (número)', store.whatsapp) +
         fld('store.phone', 'Teléfono', store.phone) + fld('store.email', 'Correo', store.email) +
-        fld('store.hours', 'Horario', store.hours) + fld('store.address', 'Dirección', store.address) +
+        fld('store.hours', 'Horario (texto libre)', store.hours) + fld('store.address', 'Dirección', store.address) +
         fld('store.currency', 'Símbolo moneda', store.currency) +
         sel('store.currencyPosition', 'Posición moneda', [['before', 'Antes ($10)'], ['after', 'Después (10 $)']], store.currencyPosition || 'before') +
-        '</div><div class="check"><input type="checkbox" id="st_open"' + (store.open !== false ? ' checked' : '') + '><span>Tienda abierta</span></div>' +
-        '<div class="field"><label>Mensaje de tienda cerrada</label><input type="text" id="st_closed" value="' + esc(store.closedMessage || '') + '"></div>' +
+        '</div><div class="check"><input type="checkbox" id="st_open"' + (store.open !== false ? ' checked' : '') + '><span>Tienda abierta (interruptor general)</span></div>' +
+        '<p class="desc" style="margin:4px 0 0">Si lo desmarcas, la tienda se muestra cerrada sin importar el horario.</p>' +
+        '<div class="field"><label>Mensaje de tienda cerrada</label><input type="text" id="st_closed" placeholder="Déjalo vacío para usar el mensaje automático" value="' + esc(store.closedMessage || '') + '"></div>' +
         '</div>';
-
-      html += '<div class="card"><h3>Portada (Hero)</h3><div class="row">' +
+      var cardSchedule = '<div class="card"><h3>Horario de atención</h3>' +
+        '<p class="desc">Define los días y horas en que se aceptan pedidos. Fuera de este horario la tienda aparece <strong>cerrada</strong> y no se pueden enviar pedidos. Marca «cerrado» en los días sin atención.</p>' +
+        '<div id="schNow" class="sched-now"></div>' +
+        scheduleHtml(store.schedule) +
+        '</div>';
+      var cardHero = '<div class="card"><h3>Portada (Hero)</h3><div class="row">' +
         fld('hero.title', 'Título', hero.title) + fld('hero.subtitle', 'Subtítulo', hero.subtitle) +
         fld('hero.buttonText', 'Texto del botón', hero.buttonText) + fld('hero.buttonLink', 'Enlace del botón', hero.buttonLink) +
         '</div></div>';
-
-      html += '<div class="card"><h3>Textos de secciones</h3><div class="row">' +
+      var cardTextos = '<div class="card"><h3>Textos de secciones</h3><div class="row">' +
         fld('texts.combos.badge', 'Combos · badge', texts.combos && texts.combos.badge) +
         fld('texts.combos.title', 'Combos · título', texts.combos && texts.combos.title) +
         ta('texts.combos.subtitle', 'Combos · subtítulo', texts.combos && texts.combos.subtitle) +
@@ -1012,23 +2059,29 @@
         fld('texts.bestSellers.title', 'Vendidos · título', texts.bestSellers && texts.bestSellers.title) +
         ta('texts.bestSellers.subtitle', 'Vendidos · subtítulo', texts.bestSellers && texts.bestSellers.subtitle) +
         '</div></div>';
-
-      html += '<div class="card"><h3>Secciones del home</h3><p class="desc">Visibilidad y orden.</p>' +
+      var cardSec = '<div class="card"><h3>Secciones del home</h3><p class="desc">Visibilidad y orden.</p>' +
         '<div id="secList">' + sections.map(function (sec, i) { return sectionRow(sec, i); }).join('') + '</div></div>';
-
-      html += '<div class="card"><h3>Métodos de pago</h3><p class="desc">Uno por línea.</p>' +
+      var cardPay = '<div class="card"><h3>Métodos de pago</h3><p class="desc">Uno por línea.</p>' +
         '<textarea id="payMethods" style="min-height:110px">' + esc((store.paymentMethods || []).join('\n')) + '</textarea></div>';
-
-      html += '<div class="card"><h3>Plantilla de mensaje (WhatsApp) — Cotización</h3><p class="desc">Variables: {storeName} {name} {location} {paymentMethod} {items} {total}</p>' +
+      var cardMsg1 = '<div class="card"><h3>Plantilla de mensaje (WhatsApp) — Cotización</h3><p class="desc">Variables: {storeName} {name} {location} {paymentMethod} {items} {total}</p>' +
         '<textarea id="msgTpl" style="min-height:130px">' + esc(store.messageTemplate || '') + '</textarea></div>';
-
-      html += '<div class="card"><h3>Plantilla de mensaje (WhatsApp) — Contacto</h3><p class="desc">Variables: {storeName} {name} {subject} {message}</p>' +
+      var cardMsg2 = '<div class="card"><h3>Plantilla de mensaje (WhatsApp) — Contacto</h3><p class="desc">Variables: {storeName} {name} {subject} {message}</p>' +
         '<textarea id="contactTpl" style="min-height:110px">' + esc(store.contactTemplate || '') + '</textarea></div>';
-
-      html += '<div class="card"><h3>Plantilla de mensaje (WhatsApp) — Compartir producto</h3><p class="desc">Variables: {storeName} {name} {sub} {url}</p>' +
+      var cardMsg3 = '<div class="card"><h3>Plantilla de mensaje (WhatsApp) — Compartir producto</h3><p class="desc">Variables: {storeName} {name} {sub} {url}</p>' +
         '<textarea id="shareTpl" style="min-height:90px">' + esc(store.shareTemplate || '') + '</textarea></div>';
 
-      html += '</form>';
+      var panes = [
+        { k: 'general', l: 'General', html: cardStore + cardSchedule },
+        { k: 'portada', l: 'Portada', html: cardLogo + cardHero },
+        { k: 'textos', l: 'Textos', html: cardTextos + cardSec },
+        { k: 'pagos', l: 'Pagos', html: cardPay },
+        { k: 'mensajes', l: 'Mensajes', html: cardMsg1 + cardMsg2 + cardMsg3 }
+      ];
+      var subnav = '<div class="subnav" role="tablist">' +
+        panes.map(function (p, i) { return '<button class="subnav-btn' + (i === 0 ? ' active' : '') + '" data-htab="' + p.k + '" type="button" role="tab">' + esc(p.l) + '</button>'; }).join('') +
+        '</div>';
+      var panesHtml = panes.map(function (p, i) { return '<div class="hpane" data-pane="' + p.k + '"' + (i ? ' hidden' : '') + '>' + p.html + '</div>'; }).join('');
+      var html = '<form id="homeForm">' + subnav + panesHtml + '</form>';
       mount.innerHTML = html;
 
       wireForm([{ k: 'logo', t: 'image' }], mount, {});
@@ -1045,6 +2098,34 @@
       var form = $('#homeForm', mount);
       form.addEventListener('input', scheduleDraft);
       form.addEventListener('change', scheduleDraft);
+
+      // Indicador en vivo: ¿abierta ahora según el formulario?
+      var schNowEl = $('#schNow', mount);
+      function updateSchNow() {
+        if (!schNowEl) return;
+        var sch = readSchedule(mount);
+        var open = $('#st_open', mount) ? $('#st_open', mount).checked : true;
+        var now = new Date();
+        var keys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        var d = sch[keys[now.getDay()]] || {};
+        var hm = function (s) { var m = /^(\d{1,2}):(\d{2})/.exec(s || ''); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+        var cur = now.getHours() * 60 + now.getMinutes();
+        var o = hm(d.o), x = hm(d.x);
+        var isOpen = open && !d.c && o != null && x != null && cur >= o && cur < x;
+        schNowEl.innerHTML = '<span class="sched-badge ' + (isOpen ? 'on' : 'off') + '">' + (isOpen ? 'Abierta ahora' : 'Cerrada ahora') + '</span>';
+      }
+      form.addEventListener('input', updateSchNow);
+      form.addEventListener('change', updateSchNow);
+      updateSchNow();
+      var subnav = mount.querySelector('.subnav');
+      if (subnav) {
+        subnav.onclick = function (e) {
+          var btn = e.target.closest('.subnav-btn');
+          if (!btn) return;
+          subnav.querySelectorAll('.subnav-btn').forEach(function (x) { x.classList.toggle('active', x === btn); });
+          mount.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== btn.dataset.htab; });
+        };
+      }
 
       var draft = readHomeDraft();
       if (draft) {
@@ -1094,6 +2175,7 @@
     });
     out.store.open = $('#st_open').checked;
     out.store.closedMessage = $('#st_closed').value.trim();
+    out.store.schedule = readSchedule(root);
     out.store.paymentMethods = $('#payMethods').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
     out.store.messageTemplate = $('#msgTpl').value;
     out.store.contactTemplate = $('#contactTpl').value;
@@ -1154,15 +2236,18 @@
         '<button class="btn primary" id="saveHoliday" style="margin-top:16px">Guardar festivo</button></div>';
 
       html += '<div class="card"><h3>Temas</h3><p class="desc">Elige el tema activo. Los colores y efectos se editan en la pestaña <strong>Apariencia</strong>.</p>' +
+        '<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><button class="btn sm" id="goApariencia" type="button">Ir a Apariencia</button></div>' +
+        // goApariencia wired below
         '<table class="responsive"><tbody>' +
         themes.map(function (t) {
           return '<tr><td data-label="Tema"><strong>' + esc(t.label) + '</strong> <span class="muted">(' + esc(t.key) + ')</span></td>' +
             '<td data-label="Activo"><label class="check"><input type="radio" name="activeTheme" data-active="' + esc(t.id) + '"' + (t.is_active ? ' checked' : '') + '><span>Activo</span></label></td></tr>';
         }).join('') +
         '</tbody></table></div>';
-      mount.innerHTML = html;
+        mount.innerHTML = html;
+        var ga = $('#goApariencia', mount); if (ga) ga.addEventListener('click', function () { switchTab('apariencia'); });
 
-      $('#saveHoliday', mount).addEventListener('click', function () {
+        $('#saveHoliday', mount).addEventListener('click', function () {
         s.holiday = {
           active: $('#h_active').checked,
           mode: $('#h_mode').value,
@@ -1204,7 +2289,8 @@
       .catch(function (e) { mount.innerHTML = '<div class="card empty">Error: ' + esc(e.message) + '</div>'; });
 
     function draw(themes) {
-      var html = '<div class="card"><h3>Colores y efectos</h3><p class="desc">Personaliza cada tema. La tienda usa el tema activo (o el festivo vigente). El botón de modo <strong>oscuro/claro</strong> de la tienda usa los colores "modo oscuro".</p>';
+      var html = '<div class="card"><h3>Colores y efectos</h3><p class="desc">Personaliza cada tema. La tienda usa el tema activo (o el festivo vigente). El botón de modo <strong>oscuro/claro</strong> de la tienda usa los colores "modo oscuro".</p>' +
+        '<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><button class="btn sm" id="goTemas" type="button">Ir a Temas / Festivos</button></div>';
       themes.forEach(function (t) {
         var c = t.colors || {};
         var fx = (t.decorations || {}).fx || {};
@@ -1246,6 +2332,7 @@
       });
       html += '</div>';
       mount.innerHTML = html;
+      var gta = $('#goTemas', mount); if (gta) gta.addEventListener('click', function () { switchTab('temas'); });
 
       if (window.ColorPicker && ColorPicker.init) ColorPicker.init(mount);
 
@@ -1299,9 +2386,11 @@
    *  Usuarios (admins)
    * ========================================================= */
   function renderUsers(mount) {
+    var run = function () {
     mount.innerHTML = skeleton(4);
     load('admins', { select: '*', order: 'created_at.asc' }).then(function (rows) {
-      var state = { q: '' };
+      var saved = uiGet('usuarios', {});
+      var state = { q: saved.q || '' };
       draw();
 
       function reload() { return load('admins', { select: '*', order: 'created_at.asc' }).then(function (r) { rows = r; renderBody(); }); }
@@ -1312,8 +2401,9 @@
           buttons: [{ label: '+ Invitar usuario', id: 'newUser', class: 'primary' }]
         }) + '<div id="uBody"></div>' +
           '<div class="card"><p class="mb0 muted" style="font-size:12.5px">Los usuarios se crean en <strong>Supabase → Authentication → Users</strong>. Al invitarlos desde aquí se crea la cuenta (si el registro por email está habilitado) y su perfil. Si tienes la confirmación por correo activada, el usuario deberá confirmarla antes de entrar.</p></div>';
+        $('#uQ', mount).value = state.q;
         renderBody();
-        $('#uQ', mount).addEventListener('input', function () { state.q = this.value; renderBody(); });
+        $('#uQ', mount).addEventListener('input', function () { state.q = this.value; uiSet('usuarios', { q: state.q }); renderBody(); });
         $('#newUser', mount).addEventListener('click', inviteUser);
       }
 
@@ -1397,7 +2487,9 @@
           ]
         });
       }
-    }).catch(function (e) { mount.innerHTML = '<div class="card empty">Error: ' + esc(e.message) + '</div>'; });
+    }).catch(function (e) { errorState(mount, e, run); });
+    };
+    run();
   }
 
   /* =========================================================
@@ -1405,9 +2497,13 @@
    * ========================================================= */
   var ORDER_STATUS = ['nuevo', 'en_proceso', 'pagado', 'entregado', 'cancelado'];
   function renderOrders(mount) {
+    var run = function () {
     mount.innerHTML = skeleton(5);
     load('orders', { select: '*', order: 'created_at.desc' }).then(function (rows) {
-      var state = { q: '', status: '' };
+      var saved = uiGet('pedidos', {});
+      var state = { q: saved.q || '', status: saved.status || '' };
+      if (PENDING.pedidos) { if (PENDING.pedidos.status != null) state.status = PENDING.pedidos.status; PENDING.pedidos = null; }
+      function persist() { uiSet('pedidos', { q: state.q, status: state.status }); }
       draw();
 
       function visibleRows() {
@@ -1422,9 +2518,11 @@
           countId: 'oCount',
           buttons: [{ label: 'Exportar CSV', id: 'csvBtn', class: 'ghost' }]
         }) + '<div id="oBody"></div>';
+        $('#oQ', mount).value = state.q;
+        $('#oStatus', mount).value = state.status;
         renderBody();
-        $('#oQ', mount).addEventListener('input', function () { state.q = this.value; renderBody(); });
-        $('#oStatus', mount).addEventListener('change', function () { state.status = this.value; renderBody(); });
+        $('#oQ', mount).addEventListener('input', function () { state.q = this.value; persist(); renderBody(); });
+        $('#oStatus', mount).addEventListener('change', function () { state.status = this.value; persist(); renderBody(); });
         $('#csvBtn', mount).addEventListener('click', exportCsv);
       }
       function renderBody() {
@@ -1488,17 +2586,18 @@
           ]
         });
       }
-    }).catch(function (e) { mount.innerHTML = '<div class="card empty">Error: ' + esc(e.message) + '</div>'; });
+    }).catch(function (e) { errorState(mount, e, run); });
+    };
+    run();
   }
 
   // Actualiza el badge de pedidos nuevos en el menú lateral.
   function refreshNavBadge() {
-    var badge = $('[data-badge="pedidos"]');
-    if (!badge) return;
+    var badges = $all('[data-badge="pedidos"]');
+    if (!badges.length) return;
     load('orders', { select: 'id,status' }).then(function (rows) {
       var n = rows.filter(function (o) { return o.status === 'nuevo'; }).length;
-      badge.textContent = n;
-      badge.hidden = !n;
+      badges.forEach(function (badge) { badge.textContent = n; badge.hidden = !n; });
     }).catch(function () {});
   }
 
@@ -1506,9 +2605,10 @@
    *  Dashboard + Backup
    * ========================================================= */
   function renderDashboard(mount) {
+    var run = function () {
     mount.innerHTML = skeleton(3);
     Promise.all([
-      SB.get('products', scope('products', { select: 'id,type,hidden' })),
+      SB.get('products', scope('products', { select: 'id,type,hidden,image' })),
       SB.get('categories', scope('categories', { select: 'id' })),
       SB.get('orders', scope('orders', { select: 'id,order_number,status,total,created_at' })),
       SB.get('activity_log', scope('activity_log', { select: 'text,created_at,user_id', order: 'created_at.desc', limit: '8' })).catch(function () { return []; }),
@@ -1516,7 +2616,12 @@
     ]).then(function (r) {
       var prod = r[0], cats = r[1], orders = r[2], log = r[3] || [], admins = r[4] || [];
       function ymd(d) { return d.toISOString().slice(0, 10); }
-      var range = { from: ymd(new Date(Date.now() - 29 * 864e5)), to: ymd(new Date()) };
+      var savedR = uiGet('dash_range', {});
+      var range = {
+        from: savedR.from != null ? savedR.from : ymd(new Date(Date.now() - 29 * 864e5)),
+        to: savedR.to != null ? savedR.to : ymd(new Date())
+      };
+      function setRange(f, t) { range.from = f; range.to = t; uiSet('dash_range', { from: f, to: t }); draw(); }
       draw();
 
       function inRange(o) {
@@ -1535,13 +2640,16 @@
         var paid = scoped.filter(function (o) { return o.status === 'pagado' || o.status === 'entregado'; }).length;
         var ticket = paid ? revenue / paid : 0;
 
+        var nHidden = prod.filter(function (p) { return p.hidden; }).length;
+        var nNoImg = prod.filter(function (p) { return !p.image; }).length;
+
         var counts = {}; ORDER_STATUS.forEach(function (s) { counts[s] = 0; });
         scoped.forEach(function (o) { if (counts[o.status] != null) counts[o.status]++; });
         var maxC = Math.max.apply(null, ORDER_STATUS.map(function (s) { return counts[s]; }).concat([1]));
         var bars = ORDER_STATUS.map(function (s) {
-          return '<div class="bar-row"><span class="bar-label pill ' + s + '">' + s + '</span>' +
+          return '<button class="bar-row bar-link" data-tab="pedidos" data-status="' + s + '"><span class="bar-label pill ' + s + '">' + s + '</span>' +
             '<span class="bar-track"><span class="bar-fill" style="width:' + Math.round(counts[s] / maxC * 100) + '%"></span></span>' +
-            '<span class="bar-val">' + counts[s] + '</span></div>';
+            '<span class="bar-val">' + counts[s] + '</span></button>';
         }).join('');
 
         var nameOf = {}; admins.forEach(function (a) { nameOf[a.id] = a.name || a.username || ''; });
@@ -1563,28 +2671,47 @@
             '<input type="date" id="dTo" value="' + range.to + '">' +
           '</div>' +
           '<div class="grid">' +
-            stat(nProd, 'Productos') + stat(nCombo, 'Combos') + stat(cats.length, 'Categorías') +
-            stat(nNew, 'Pedidos nuevos') + stat(money(revenue), 'Ingresos (pagados)') + stat(money(ticket), 'Ticket promedio') +
+            stat(nProd, 'Productos', { tab: 'productos' }) + stat(nCombo, 'Combos', { tab: 'combos' }) + stat(cats.length, 'Categorías', { tab: 'categorias' }) +
+            stat(nNew, 'Pedidos nuevos', { tab: 'pedidos', status: 'nuevo' }) + stat(money(revenue), 'Ingresos (pagados)') + stat(money(ticket), 'Ticket promedio') +
+          '</div>' +
+          '<div class="quick-actions">' +
+            '<button class="qa" data-tab="productos" data-status="hidden"><span class="qa-n">' + nHidden + '</span>Productos ocultos</button>' +
+            '<button class="qa" data-tab="productos" data-status="visible"><span class="qa-n">' + (nProd - nHidden) + '</span>Productos visibles</button>' +
+            '<button class="qa" data-tab="productos" data-missing="image"><span class="qa-n">' + nNoImg + '</span>Sin imagen</button>' +
+            '<button class="qa" data-tab="pedidos" data-status="nuevo"><span class="qa-n">' + nNew + '</span>Pedidos nuevos</button>' +
           '</div>' +
           '<div class="dashboard-cols">' +
-            '<div class="card"><h3>Pedidos por estado</h3><p class="desc">' + scoped.length + ' pedido(s) en el período.</p>' + bars + '</div>' +
+            '<div class="card"><h3>Pedidos por estado</h3><p class="desc">' + scoped.length + ' pedido(s) en el período. Pulsa para ver.</p>' + bars + '</div>' +
             '<div class="card"><h3>Actividad reciente</h3><p class="desc">Últimos cambios en el panel.</p>' + actHtml + '</div>' +
           '</div>';
 
-        $('#dFrom', mount).addEventListener('change', function () { range.from = this.value; draw(); });
-        $('#dTo', mount).addEventListener('change', function () { range.to = this.value; draw(); });
+        $('#dFrom', mount).addEventListener('change', function () { setRange(this.value, range.to); });
+        $('#dTo', mount).addEventListener('change', function () { setRange(range.from, this.value); });
         $all('[data-range]', mount).forEach(function (b) {
           b.addEventListener('click', function () {
             var n = b.dataset.range;
-            if (n === 'all') { range.from = ''; range.to = ''; }
-            else { range.from = ymd(new Date(Date.now() - (Number(n) - 1) * 864e5)); range.to = ymd(new Date()); }
-            draw();
+            if (n === 'all') setRange('', '');
+            else setRange(ymd(new Date(Date.now() - (Number(n) - 1) * 864e5)), ymd(new Date()));
+          });
+        });
+        $all('[data-tab]', mount).forEach(function (b) {
+          b.addEventListener('click', function () {
+            var f = {};
+            if (b.dataset.status) f.status = b.dataset.status;
+            if (b.dataset.missing) f.missing = b.dataset.missing;
+            goTab(b.dataset.tab, Object.keys(f).length ? f : null);
           });
         });
       }
-    }).catch(function (e) { mount.innerHTML = '<div class="card empty">Error: ' + esc(e.message) + '</div>'; });
+    }).catch(function (e) { errorState(mount, e, run); });
+    };
+    run();
 
-    function stat(n, l) { return '<div class="stat"><div class="n">' + esc(n) + '</div><div class="l">' + esc(l) + '</div></div>'; }
+    function stat(n, l, o) {
+      var inner = '<div class="n">' + esc(n) + '</div><div class="l">' + esc(l) + '</div>';
+      if (!o) return '<div class="stat">' + inner + '</div>';
+      return '<button class="stat stat-link" data-tab="' + esc(o.tab) + '"' + (o.status ? ' data-status="' + esc(o.status) + '"' : '') + '>' + inner + '</button>';
+    }
   }
 
   function timeAgo(iso) {
@@ -1685,22 +2812,54 @@
     { k: 'navegacion', l: 'Navegación', grp: 'Tienda', svg: 'navegacion', render: renderNavTab },
     { k: 'apariencia', l: 'Apariencia', grp: 'Tienda', svg: 'apariencia', render: renderApariencia },
     { k: 'temas', l: 'Temas / Festivos', grp: 'Tienda', svg: 'temas', render: renderThemes },
-    { k: 'pedidos', l: 'Pedidos', grp: 'Tienda', svg: 'pedidos', render: renderOrders },
+    { k: 'pedidos', l: 'Pedidos', grp: 'Ventas', svg: 'pedidos', render: renderOrders },
     { k: 'usuarios', l: 'Usuarios', grp: 'Sistema', svg: 'usuarios', render: renderUsers, ownerOnly: true },
     { k: 'backup', l: 'Backup', grp: 'Sistema', svg: 'backup', render: renderBackup }
   ];
 
   function renderNavTab(mount) {
-    mount.innerHTML = '<div class="card" style="padding:0"><h3 style="padding:20px 20px 0">Grupos</h3><div id="navGroups" style="padding:0 20px 20px"></div>' +
-      '<div style="border-top:1px solid var(--border)"><h3 style="padding:20px 20px 0">Ítems</h3><div id="navItems" style="padding:0 20px 20px"></div></div></div>';
-    renderEntityList('nav_groups', $('#navGroups', mount));
-    renderEntityList('nav_items', $('#navItems', mount));
+    mount.innerHTML = '<div class="nav2col">' +
+      '<div><div class="card" style="padding:0"><h3 style="padding:18px 18px 0">Grupos</h3><div id="navGroups" style="padding:0 18px 18px"></div></div></div>' +
+      '<div><div class="card" style="padding:0"><h3 style="padding:18px 18px 0">Ítems</h3><div id="navItems" style="padding:0 18px 18px"></div></div></div>' +
+      '</div>';
+    var selected = null;
+    function drawGroups() {
+      renderEntityList('nav_groups', $('#navGroups', mount), {
+        title: 'Grupos', selectedId: selected,
+        onRowClick: function (row) { selected = row.id; drawGroups(); drawItems(); }
+      });
+    }
+    function drawItems() {
+      renderEntityList('nav_items', $('#navItems', mount), {
+        title: 'Ítems', filterField: 'group_id', filterValue: selected,
+        hint: selected ? null : 'Selecciona un grupo a la izquierda para filtrar sus ítems.',
+        emptyFilter: 'Este grupo aún no tiene ítems.',
+        emptySub: 'Crea el primer grupo a la izquierda.'
+      });
+    }
+    drawGroups(); drawItems();
   }
   function renderBuilderTab(mount) {
-    mount.innerHTML = '<div class="card" style="padding:0"><h3 style="padding:20px 20px 0">Slots</h3><div id="bSlots" style="padding:0 20px 20px"></div>' +
-      '<div style="border-top:1px solid var(--border)"><h3 style="padding:20px 20px 0">Piezas</h3><div id="bParts" style="padding:0 20px 20px"></div></div></div>';
-    renderEntityList('builder_slots', $('#bSlots', mount));
-    renderEntityList('builder_parts', $('#bParts', mount));
+    mount.innerHTML = '<div class="nav2col">' +
+      '<div><div class="card" style="padding:0"><h3 style="padding:18px 18px 0">Slots</h3><div id="bSlots" style="padding:0 18px 18px"></div></div></div>' +
+      '<div><div class="card" style="padding:0"><h3 style="padding:18px 18px 0">Piezas</h3><div id="bParts" style="padding:0 18px 18px"></div></div></div>' +
+      '</div>';
+    var selected = null;
+    function drawSlots() {
+      renderEntityList('builder_slots', $('#bSlots', mount), {
+        title: 'Slots', selectedId: selected,
+        onRowClick: function (row) { selected = row.id; drawSlots(); drawParts(); }
+      });
+    }
+    function drawParts() {
+      renderEntityList('builder_parts', $('#bParts', mount), {
+        title: 'Piezas', filterField: 'slot_id', filterValue: selected,
+        hint: selected ? null : 'Selecciona un slot a la izquierda para filtrar sus piezas.',
+        emptyFilter: 'Este slot aún no tiene piezas.',
+        emptySub: 'Crea el primer slot a la izquierda.'
+      });
+    }
+    drawSlots(); drawParts();
   }
 
   function buildSidebar() {
@@ -1726,12 +2885,91 @@
     });
   }
 
+  // Accesos rápidos de la barra inferior (teléfono). El centro es el botón "+".
+  var TABBAR = [
+    { k: 'categorias', l: 'Categorías', svg: 'categorias' },
+    { k: 'productos', l: 'Productos', svg: 'productos' },
+    { fab: true },
+    { k: 'apariencia', l: 'Personalizar', svg: 'apariencia' },
+    { k: 'pedidos', l: 'Pedidos', svg: 'pedidos', badge: true }
+  ];
+  var FAB_OPEN = false;
+  var FAB_CREATE = [
+    { k: 'productos', l: 'Nuevo producto', svg: 'productos' },
+    { k: 'combos', l: 'Nuevo combo', svg: 'combos' },
+    { k: 'categorias', l: 'Nueva categoría', svg: 'categorias' }
+  ];
+
+  function buildTabbar() {
+    var bar = $('#tabbar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    TABBAR.forEach(function (t) {
+      if (t.fab) {
+        var wrap = el('div', { class: 'tabbar-fab-wrap' });
+        var menu = el('div', { class: 'tabbar-fab-menu', hidden: true, role: 'menu' });
+        FAB_CREATE.forEach(function (o) {
+          var mb = el('button', { class: 'tabbar-fab-item', type: 'button', role: 'menuitem' },
+            svgIcon(o.svg) + '<span>' + esc(o.l) + '</span>');
+          mb.addEventListener('click', function (e) { e.stopPropagation(); setFab(false); quickCreate(o.k); });
+          menu.appendChild(mb);
+        });
+        var fab = el('button', { class: 'tabbar-fab', type: 'button', 'aria-label': 'Crear', 'aria-haspopup': 'true', 'aria-expanded': 'false' },
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>');
+        fab.addEventListener('click', function (e) { e.stopPropagation(); setFab(!FAB_OPEN); });
+        wrap.appendChild(menu);
+        wrap.appendChild(fab);
+        bar.appendChild(wrap);
+        return;
+      }
+      var b = el('button', { class: 'tabbar-btn' + (t.k === S.tab ? ' active' : ''), 'data-tab': t.k, type: 'button' },
+        svgIcon(t.svg) + '<span>' + esc(t.l) + '</span>' +
+        (t.badge ? '<span class="tabbar-badge" data-badge="pedidos" hidden>0</span>' : ''));
+      b.addEventListener('click', function () { switchTab(t.k); });
+      bar.appendChild(b);
+    });
+    if (!bar.dataset.bound) {
+      bar.dataset.bound = '1';
+      document.addEventListener('click', function () { setFab(false); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setFab(false); });
+    }
+  }
+
+  function setFab(open) {
+    var bar = $('#tabbar');
+    if (!bar) return;
+    FAB_OPEN = !!open;
+    var menu = $('.tabbar-fab-menu', bar);
+    var fab = $('.tabbar-fab', bar);
+    if (menu) menu.hidden = !open;
+    if (fab) fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+    bar.classList.toggle('fab-open', !!open);
+  }
+
+  // Abre el editor de alta de una sección tras navegar a ella.
+  function quickCreate(tab) {
+    switchTab(tab);
+    var tries = 0;
+    (function wait() {
+      var b = document.getElementById('newBtn');
+      if (b && b.offsetParent !== null) { b.click(); return; }
+      if (b && tries > 6) { b.click(); return; }
+      if (tries++ < 50) setTimeout(wait, 60);
+    })();
+  }
+
   function switchTab(key) {
     var tab = TABS.filter(function (t) { return t.k === key; })[0];
     if (!tab) return;
     S.tab = key;
     closeModal();
+    setFab(false);
     $all('#sideNav .nav-item').forEach(function (b) {
+      var on = b.dataset.tab === key;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-current', on ? 'page' : 'false');
+    });
+    $all('#tabbar .tabbar-btn').forEach(function (b) {
       var on = b.dataset.tab === key;
       b.classList.toggle('active', on);
       b.setAttribute('aria-current', on ? 'page' : 'false');
@@ -1771,8 +3009,13 @@
     var who = $('#whoami');
     who.textContent = (S.me.name || S.user.email || '') + (S.me.role === 'owner' ? ' · propietario' : '');
     buildSidebar();
+    buildTabbar();
     switchTab('dashboard');
     refreshNavBadge();
+    var seen = false;
+    try { seen = !!localStorage.getItem(tourDoneKey()); } catch (e) {}
+    if (!seen) setTimeout(startTour, 700);
+    startSessionGuard();
   }
 
   function boot() {
@@ -1873,37 +3116,321 @@
     setTimeout(function () { input.focus(); }, 0);
   }
 
+  /* =========================================================
+   *  Atajos / Ayuda
+   * ========================================================= */
+  function openShortcuts() {
+    var rows = [
+      ['Ctrl + K', 'Búsqueda global'],
+      ['Ctrl + S', 'Guardar cambios (en Home)'],
+      ['Esc', 'Cerrar diálogo o menú'],
+      ['?', 'Abrir esta ayuda']
+    ];
+    var body = '<p class="desc">Atajos de teclado y guía rápida.</p>' +
+      '<table class="shortcuts"><tbody>' + rows.map(function (r) {
+        return '<tr><td><kbd>' + esc(r[0]) + '</kbd></td><td>' + esc(r[1]) + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<p class="muted" style="font-size:12.5px;margin-top:14px">¿Primera vez? Haz el recorrido guiado para conocer el panel.</p>';
+    openModal({
+      title: 'Ayuda y atajos',
+      size: 'sm',
+      body: body,
+      buttons: [
+        { label: 'Entendido', onClick: closeModal },
+        { label: 'Ver recorrido', class: 'primary', onClick: function () { closeModal(); setTimeout(startTour, 120); } }
+      ]
+    });
+  }
+
+  /* =========================================================
+   *  Recorrido guiado (tour)
+   * ========================================================= */
+  var TOUR_STEPS = [
+    { tab: 'dashboard', sel: '.ws', title: 'Tu tienda', text: 'Desde aquí gestionas todo el contenido de la tienda.', side: 'right' },
+    { tab: 'dashboard', sel: '#sideNav', title: 'Secciones', text: 'Agrupadas en Catálogo, Tienda y Sistema. Cada grupo abre su pestaña.', side: 'right' },
+    { tab: 'productos', sel: '[data-tab="productos"]', title: 'Productos', text: 'Crea, edita, duplica y ordena tus productos. También combos y categorías.', side: 'right' },
+    { tab: 'pedidos', sel: '[data-tab="pedidos"]', title: 'Ventas', text: 'Los pedidos que llegan de la tienda aparecen aquí con su estado.', side: 'right' },
+    { tab: 'home', sel: '#viewActions', title: 'Guardar cambios', text: 'En Home y otras pestañas guarda con este botón o con Ctrl+S.', side: 'bottom' },
+    { tab: 'dashboard', sel: '#searchBtn', title: 'Búsqueda rápida', text: 'Pulsa Ctrl+K para saltar a cualquier sección, producto o pedido.', side: 'bottom' },
+    { tab: 'dashboard', sel: '#helpBtn', title: 'Ayuda', text: 'Puedes reabrir este recorrido cuando quieras desde aquí.', side: 'right' }
+  ];
+  var tour = null;
+  function tourDoneKey() { return 'gh_tour_done_' + sid(); }
+  function startTour() {
+    if (tour) return;
+    var ov = el('div', { class: 'tour-overlay' });
+    var spot = el('div', { class: 'tour-spot' });
+    var tip = el('div', { class: 'tour-tip', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Recorrido guiado' });
+    tip.innerHTML = '<h4></h4><p></p><div class="tour-tip-actions">' +
+      '<button class="btn ghost sm" data-skip type="button">Saltar</button>' +
+      '<span class="tour-dots"></span>' +
+      '<button class="btn sm" data-prev type="button">Anterior</button>' +
+      '<button class="btn primary sm" data-next type="button">Siguiente</button></div>';
+    ov.appendChild(spot); ov.appendChild(tip);
+    document.body.appendChild(ov);
+    tour = { ov: ov, spot: spot, tip: tip, i: 0 };
+    tip.querySelector('[data-next]').addEventListener('click', function () {
+      if (tour.i >= TOUR_STEPS.length - 1) return endTour();
+      tour.i++; showStep();
+    });
+    tip.querySelector('[data-prev]').addEventListener('click', function () { if (tour.i > 0) { tour.i--; showStep(); } });
+    tip.querySelector('[data-skip]').addEventListener('click', endTour);
+    window.addEventListener('resize', positionTour);
+    showStep();
+  }
+  function showStep() {
+    if (!tour) return;
+    var step = TOUR_STEPS[tour.i];
+    if (step.tab && S.tab !== step.tab) switchTab(step.tab);
+    setTimeout(positionTour, 80);
+  }
+  function positionTour() {
+    if (!tour) return;
+    var step = TOUR_STEPS[tour.i];
+    var target = document.querySelector(step.sel);
+    if (!target) { if (tour.i >= TOUR_STEPS.length - 1) return endTour(); tour.i++; return showStep(); }
+    var r = target.getBoundingClientRect(), pad = 8;
+    var sp = tour.spot;
+    sp.style.top = (r.top - pad) + 'px';
+    sp.style.left = (r.left - pad) + 'px';
+    sp.style.width = (r.width + pad * 2) + 'px';
+    sp.style.height = (r.height + pad * 2) + 'px';
+    var tip = tour.tip;
+    tip.querySelector('h4').textContent = step.title;
+    tip.querySelector('p').textContent = step.text;
+    tip.querySelector('[data-prev]').style.visibility = tour.i ? 'visible' : 'hidden';
+    tip.querySelector('[data-next]').textContent = tour.i === TOUR_STEPS.length - 1 ? 'Finalizar' : 'Siguiente';
+    tip.querySelector('.tour-dots').textContent = (tour.i + 1) + ' / ' + TOUR_STEPS.length;
+    tip.style.visibility = 'hidden';
+    tip.style.top = '0px'; tip.style.left = '0px';
+    var tr = tip.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+    var top, left;
+    if (step.side === 'right') { left = r.right + pad + 10; top = r.top; }
+    else { top = r.bottom + pad + 10; left = r.left; }
+    if (top + tr.height > vh - 12) top = Math.max(12, r.top - tr.height - pad - 10);
+    if (left + tr.width > vw - 12) left = Math.max(12, vw - tr.width - 12);
+    if (left < 12) left = 12;
+    if (top < 12) top = 12;
+    tip.style.top = top + 'px';
+    tip.style.left = left + 'px';
+    tip.style.visibility = '';
+  }
+  function endTour() {
+    if (!tour) return;
+    window.removeEventListener('resize', positionTour);
+    tour.ov.remove();
+    tour = null;
+    try { localStorage.setItem(tourDoneKey(), '1'); } catch (e) {}
+  }
+
   function saveCurrent() {
     var s = $('#saveHome');
     if (s) { s.click(); return true; }
     return false;
   }
 
+  /* =========================================================
+   *  Seguridad: anti fuerza bruta (login) + vigencia de sesión
+   * ========================================================= */
+  // --- Bloqueo progresivo por correo (por navegador) ---
+  var LOGIN_KEY = 'gh_login_guard';
+  var MAX_TRIES = 5;
+  var BASE_LOCK = 30 * 1000;         // 30 s al llegar al 5º fallo
+  var MAX_LOCK = 15 * 60 * 1000;     // tope 15 min
+  var lockTimer = null;
+
+  function readGuard() {
+    try { return JSON.parse(localStorage.getItem(LOGIN_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function writeGuard(g) { try { localStorage.setItem(LOGIN_KEY, JSON.stringify(g)); } catch (e) {} }
+  function guardFor(email) { return (email && readGuard()[email]) || null; }
+  function registerFail(email) {
+    if (!email) return 0;
+    var g = readGuard();
+    var e = g[email] || { fails: 0, lockUntil: 0 };
+    e.fails += 1;
+    if (e.fails >= MAX_TRIES) {
+      e.lockUntil = Date.now() + Math.min(MAX_LOCK, BASE_LOCK * Math.pow(2, e.fails - MAX_TRIES));
+    }
+    e.at = Date.now();
+    g[email] = e;
+    var keys = Object.keys(g);
+    if (keys.length > 20) {
+      keys.sort(function (a, b) { return (g[b].at || 0) - (g[a].at || 0); });
+      keys.slice(20).forEach(function (k) { delete g[k]; });
+    }
+    writeGuard(g);
+    return e.lockUntil;
+  }
+  function clearGuard(email) { var g = readGuard(); if (g[email]) { delete g[email]; writeGuard(g); } }
+  function lockRemaining(email) {
+    var e = guardFor(email);
+    return (!e || !e.lockUntil) ? 0 : Math.max(0, e.lockUntil - Date.now());
+  }
+  function fmtWait(ms) {
+    var s = Math.ceil(ms / 1000);
+    return s < 60 ? s + ' s' : Math.ceil(s / 60) + ' min';
+  }
+  function stopLockTimer() { if (lockTimer) { clearInterval(lockTimer); lockTimer = null; } }
+  function applyLock(email) {
+    var bar = $('#lgLock'), btn = $('#lgBtn');
+    var left = lockRemaining(email);
+    if (left <= 0) {
+      stopLockTimer();
+      if (bar) { bar.hidden = true; bar.textContent = ''; }
+      if (btn && !btn.dataset.busy) { btn.disabled = false; btn.textContent = 'Entrar'; }
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Bloqueado'; }
+    if (bar) {
+      bar.hidden = false;
+      bar.textContent = 'Demasiados intentos fallidos. Espera ' + fmtWait(left) + ' para volver a intentarlo.';
+      bar.classList.add('shake');
+      setTimeout(function () { bar.classList.remove('shake'); }, 500);
+    }
+    if (!lockTimer) {
+      lockTimer = setInterval(function () {
+        var e = $('#lgEmail'); applyLock(e ? e.value.trim().toLowerCase() : '');
+      }, 1000);
+    }
+  }
+
+  // --- Vigencia de sesión: aviso 60 s antes + cierre automático ---
+  var sessTimer = null, warnTick = null, touchAt = 0;
+  var ACTIVITY = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'focus'];
+  function onActivity() {
+    var t = Date.now();
+    if (t - touchAt < 20000) return;
+    touchAt = t;
+    SB.touch();
+    hideSessionWarn();
+  }
+  function startSessionGuard() {
+    stopSessionGuard();
+    ACTIVITY.forEach(function (ev) { document.addEventListener(ev, onActivity, { passive: true }); });
+    document.addEventListener('visibilitychange', checkSession);
+    sessTimer = setInterval(checkSession, 5000);
+    checkSession();
+  }
+  function stopSessionGuard() {
+    if (sessTimer) { clearInterval(sessTimer); sessTimer = null; }
+    ACTIVITY.forEach(function (ev) { document.removeEventListener(ev, onActivity); });
+    document.removeEventListener('visibilitychange', checkSession);
+    hideSessionWarn();
+  }
+  function hideSessionWarn() {
+    var w = $('#sessWarn');
+    if (w && !w.hidden) w.hidden = true;
+    if (warnTick) { clearInterval(warnTick); warnTick = null; }
+  }
+  function showSessionWarn(limit) {
+    var w = $('#sessWarn');
+    if (!w) return;
+    var isIdle = limit !== 'abs';
+    var hours = Math.round((SB.SESSION.maxMs || 0) / 3600000);
+    var ico = $('#sessWarnIco'), txt = $('#sessWarnTxt'), stay = $('#sessStay');
+    if (ico) ico.textContent = isIdle ? '⏳' : '🔒';
+    if (txt) txt.innerHTML = isIdle
+      ? 'Tu sesión se cerrará por <strong>inactividad</strong> en <b id="sessWarnCount">60</b> s.'
+      : 'Tu sesión alcanzó el <strong>máximo de ' + hours + ' h</strong>. Se cerrará en <b id="sessWarnCount">60</b> s.';
+    if (stay) stay.hidden = !isIdle;
+    w.hidden = false;
+    if (warnTick) clearInterval(warnTick);
+    var paint = function () {
+      var el2 = $('#sessWarnCount');
+      if (el2) el2.textContent = Math.max(0, Math.ceil(SB.remaining().min / 1000));
+    };
+    paint();
+    warnTick = setInterval(paint, 1000);
+  }
+  function checkSession() {
+    if (!$('#appView') || $('#appView').hidden) { hideSessionWarn(); return; }
+    if (!SB.getSession() || !SB.isLoggedIn()) { doLogout('Tu sesión expiró. Inicia sesión de nuevo.'); return; }
+    var r = SB.remaining();
+    if (r.min <= 0) {
+      doLogout(r.limit === 'abs'
+        ? 'Tu sesión alcanzó el máximo permitido. Inicia sesión de nuevo.'
+        : 'Sesión cerrada por inactividad.');
+      return;
+    }
+    if (r.min <= 60000) showSessionWarn(r.limit); else hideSessionWarn();
+  }
+  function doLogout(msg) {
+    stopSessionGuard();
+    stopLockTimer();
+    S.user = null; S.me = null;
+    try { Promise.resolve(SB.signOut()).catch(function () {}); } catch (e) {}
+    invalidate();
+    showLogin();
+    if (msg) loginError(msg);
+  }
+
   $('#loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    var email = $('#lgEmail').value.trim(), pass = $('#lgPass').value;
-    var btn = $('#lgBtn'); btn.disabled = true; btn.textContent = 'Entrando…';
+    var email = $('#lgEmail').value.trim().toLowerCase();
+    var pass = $('#lgPass').value;
+    var btn = $('#lgBtn');
     $('#lgError').style.display = 'none';
-    SB.signIn(email, pass).then(resolveMe).then(showApp).catch(function (err) {
-      console.error('[login] fallo:', err && (err.status ? ('HTTP ' + err.status + ' ') : '') + (err && err.message));
-      loginError(err.message || 'No se pudo iniciar sesión.');
-    }).then(function () { btn.disabled = false; btn.textContent = 'Entrar'; });
+
+    if (lockRemaining(email) > 0) { applyLock(email); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !pass) {
+      loginError('Escribe un correo y una contraseña válidos.');
+      return;
+    }
+
+    var started = Date.now();
+    btn.dataset.busy = '1';
+    btn.disabled = true;
+    btn.textContent = 'Entrando…';
+
+    SB.signIn(email, pass).then(function () { return resolveMe(); }).then(function () {
+      clearGuard(email);
+      delete btn.dataset.busy;
+      btn.disabled = false; btn.textContent = 'Entrar';
+      showApp();
+    }, function () {
+      var left = registerFail(email);
+      // Retardo mínimo: encarece la automatización sin bloquear al usuario.
+      var wait = Math.max(0, 600 - (Date.now() - started));
+      setTimeout(function () {
+        delete btn.dataset.busy;
+        if (left > 0 || lockRemaining(email) > 0) {
+          loginError('Credenciales incorrectas. Acceso bloqueado temporalmente por seguridad.');
+          applyLock(email);
+        } else {
+          var e2 = guardFor(email) || { fails: 0 };
+          var left2 = Math.max(0, MAX_TRIES - e2.fails);
+          loginError('Credenciales incorrectas.' + (left2 <= 2 ? ' Te quedan ' + left2 + ' intento(s).' : ''));
+          btn.disabled = false; btn.textContent = 'Entrar';
+        }
+      }, wait);
+    });
   });
 
-  $('#logoutBtn').addEventListener('click', function () {
-    SB.signOut().then(function () { S.user = null; S.me = null; invalidate(); showLogin(); });
-  });
+  $('#logoutBtn').addEventListener('click', function () { doLogout('Has cerrado sesión.'); });
+  window.addEventListener('giga:unauthorized', function () { doLogout('Tu sesión expiró por seguridad. Inicia sesión de nuevo.'); });
+  var stayBtn = $('#sessStay');
+  if (stayBtn) stayBtn.addEventListener('click', function () { SB.touch(); hideSessionWarn(); });
   $('#menuToggle').addEventListener('click', function () { toggleNav(); });
   $('#sidebarScrim').addEventListener('click', function () { toggleNav(false); });
   $('#sidebarClose').addEventListener('click', function () { toggleNav(false); });
   var searchBtn = $('#searchBtn'); if (searchBtn) searchBtn.addEventListener('click', openPalette);
+  var helpBtn = $('#helpBtn'); if (helpBtn) helpBtn.addEventListener('click', openShortcuts);
   document.addEventListener('keydown', function (e) {
     var k = (e.key || '').toLowerCase();
     if ((e.ctrlKey || e.metaKey) && k === 'k') { e.preventDefault(); openPalette(); return; }
     if ((e.ctrlKey || e.metaKey) && k === 's') { if (saveCurrent()) e.preventDefault(); return; }
+    if (k === '?' && !e.ctrlKey && !e.metaKey) {
+      var tag = (e.target && e.target.tagName || '').toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') { e.preventDefault(); openShortcuts(); }
+      return;
+    }
     if (e.key === 'Escape') {
+      var discard = document.querySelector('#modalRoot ~ .overlay.top, body > .overlay.top');
+      if (discard) { discard.remove(); return; }
+      if (tour) { endTour(); return; }
       if (!$('#paletteRoot').hidden) return;
-      if ($('#modalRoot').children.length) { closeModal(); return; }
+      if ($('#modalRoot').children.length) { requestClose(); return; }
       if ($('#sidebar').classList.contains('open')) toggleNav(false);
     }
   });
