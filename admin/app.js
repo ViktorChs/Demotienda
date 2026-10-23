@@ -2610,90 +2610,46 @@
     Promise.all([
       SB.get('products', scope('products', { select: 'id,type,hidden,image' })),
       SB.get('categories', scope('categories', { select: 'id' })),
-      SB.get('orders', scope('orders', { select: 'id,order_number,status,total,created_at' })),
-      SB.get('activity_log', scope('activity_log', { select: 'text,created_at,user_id', order: 'created_at.desc', limit: '8' })).catch(function () { return []; }),
+      SB.get('activity_log', scope('activity_log', { select: 'text,created_at,user_id', order: 'created_at.desc', limit: '10' })).catch(function () { return []; }),
       SB.get('admins', scope('admins', { select: 'id,name,username' })).catch(function () { return []; })
     ]).then(function (r) {
-      var prod = r[0], cats = r[1], orders = r[2], log = r[3] || [], admins = r[4] || [];
-      function ymd(d) { return d.toISOString().slice(0, 10); }
-      var savedR = uiGet('dash_range', {});
-      var range = {
-        from: savedR.from != null ? savedR.from : ymd(new Date(Date.now() - 29 * 864e5)),
-        to: savedR.to != null ? savedR.to : ymd(new Date())
-      };
-      function setRange(f, t) { range.from = f; range.to = t; uiSet('dash_range', { from: f, to: t }); draw(); }
+      var prod = r[0], cats = r[1], log = r[2] || [], admins = r[3] || [];
       draw();
 
-      function inRange(o) {
-        var t = new Date(o.created_at).getTime();
-        if (range.from && t < new Date(range.from + 'T00:00:00').getTime()) return false;
-        if (range.to && t > new Date(range.to + 'T23:59:59').getTime()) return false;
-        return true;
-      }
       function draw() {
         var nProd = prod.filter(function (p) { return p.type !== 'combo'; }).length;
         var nCombo = prod.filter(function (p) { return p.type === 'combo'; }).length;
-        var nNew = orders.filter(function (o) { return o.status === 'nuevo'; }).length;
-        var scoped = orders.filter(inRange);
-        var revenue = scoped.filter(function (o) { return o.status === 'pagado' || o.status === 'entregado'; })
-          .reduce(function (a, o) { return a + (Number(o.total) || 0); }, 0);
-        var paid = scoped.filter(function (o) { return o.status === 'pagado' || o.status === 'entregado'; }).length;
-        var ticket = paid ? revenue / paid : 0;
-
         var nHidden = prod.filter(function (p) { return p.hidden; }).length;
         var nNoImg = prod.filter(function (p) { return !p.image; }).length;
-
-        var counts = {}; ORDER_STATUS.forEach(function (s) { counts[s] = 0; });
-        scoped.forEach(function (o) { if (counts[o.status] != null) counts[o.status]++; });
-        var maxC = Math.max.apply(null, ORDER_STATUS.map(function (s) { return counts[s]; }).concat([1]));
-        var bars = ORDER_STATUS.map(function (s) {
-          return '<button class="bar-row bar-link" data-tab="pedidos" data-status="' + s + '"><span class="bar-label pill ' + s + '">' + s + '</span>' +
-            '<span class="bar-track"><span class="bar-fill" style="width:' + Math.round(counts[s] / maxC * 100) + '%"></span></span>' +
-            '<span class="bar-val">' + counts[s] + '</span></button>';
-        }).join('');
-
         var nameOf = {}; admins.forEach(function (a) { nameOf[a.id] = a.name || a.username || ''; });
-        var acts = log.slice(0, 8);
+        var acts = log.slice(0, 10);
         var actHtml = acts.length ? '<ul class="activity">' + acts.map(function (a) {
           return '<li><span class="act-dot"></span><span class="act-text">' + esc(a.text) + '</span>' +
             '<span class="act-meta">' + esc(nameOf[a.user_id] || '') + ' · ' + esc(timeAgo(a.created_at)) + '</span></li>';
         }).join('') + '</ul>' : '<p class="muted">Sin actividad reciente.</p>';
 
         mount.innerHTML =
-          '<div class="metrics-bar">' +
-            '<button class="btn sm" data-range="7">7 días</button>' +
-            '<button class="btn sm" data-range="30">30 días</button>' +
-            '<button class="btn sm" data-range="90">90 días</button>' +
-            '<button class="btn sm" data-range="all">Todo</button>' +
-            '<span class="toolbar-spacer"></span>' +
-            '<input type="date" id="dFrom" value="' + range.from + '">' +
-            '<span class="muted">→</span>' +
-            '<input type="date" id="dTo" value="' + range.to + '">' +
-          '</div>' +
-          '<div class="grid">' +
+          '<div class="grid stats-grid">' +
             stat(nProd, 'Productos', { tab: 'productos' }) + stat(nCombo, 'Combos', { tab: 'combos' }) + stat(cats.length, 'Categorías', { tab: 'categorias' }) +
-            stat(nNew, 'Pedidos nuevos', { tab: 'pedidos', status: 'nuevo' }) + stat(money(revenue), 'Ingresos (pagados)') + stat(money(ticket), 'Ticket promedio') +
           '</div>' +
-          '<div class="quick-actions">' +
-            '<button class="qa" data-tab="productos" data-status="hidden"><span class="qa-n">' + nHidden + '</span>Productos ocultos</button>' +
-            '<button class="qa" data-tab="productos" data-status="visible"><span class="qa-n">' + (nProd - nHidden) + '</span>Productos visibles</button>' +
-            '<button class="qa" data-tab="productos" data-missing="image"><span class="qa-n">' + nNoImg + '</span>Sin imagen</button>' +
-            '<button class="qa" data-tab="pedidos" data-status="nuevo"><span class="qa-n">' + nNew + '</span>Pedidos nuevos</button>' +
-          '</div>' +
-          '<div class="dashboard-cols">' +
-            '<div class="card"><h3>Pedidos por estado</h3><p class="desc">' + scoped.length + ' pedido(s) en el período. Pulsa para ver.</p>' + bars + '</div>' +
-            '<div class="card"><h3>Actividad reciente</h3><p class="desc">Últimos cambios en el panel.</p>' + actHtml + '</div>' +
+          '<div class="dashboard-layout">' +
+            '<section class="card dash-card"><header class="card-head"><div><h3>Accesos rápidos</h3><p class="desc">Ir directo a lo que quieras editar.</p></div></header>' +
+              '<div class="quick-grid">' +
+                '<button class="quick-item" data-tab="productos"><div class="quick-icon">' + svgIcon('productos') + '</div><div class="quick-text"><div class="quick-title">Productos</div><div class="quick-sub">' + nProd + ' en catálogo</div></div><span class="quick-arrow">›</span></button>' +
+                '<button class="quick-item" data-tab="combos"><div class="quick-icon">' + svgIcon('combos') + '</div><div class="quick-text"><div class="quick-title">Combos</div><div class="quick-sub">' + nCombo + ' en catálogo</div></div><span class="quick-arrow">›</span></button>' +
+                '<button class="quick-item" data-tab="categorias"><div class="quick-icon">' + svgIcon('categorias') + '</div><div class="quick-text"><div class="quick-title">Categorías</div><div class="quick-sub">' + cats.length + ' registradas</div></div><span class="quick-arrow">›</span></button>' +
+                '<button class="quick-item" data-tab="navegacion"><div class="quick-icon">' + svgIcon('navegacion') + '</div><div class="quick-text"><div class="quick-title">Navegación</div><div class="quick-sub">Menú de la tienda</div></div><span class="quick-arrow">›</span></button>' +
+                '<button class="quick-item" data-tab="canvas"><div class="quick-icon">' + svgIcon('canvas') + '</div><div class="quick-text"><div class="quick-title">Portada / Canvas</div><div class="quick-sub">Hero animado</div></div><span class="quick-arrow">›</span></button>' +
+                '<button class="quick-item" data-tab="backup"><div class="quick-icon">' + svgIcon('backup') + '</div><div class="quick-text"><div class="quick-title">Backup</div><div class="quick-sub">Exportar / restaurar</div></div><span class="quick-arrow">›</span></button>' +
+              '</div>' +
+              (nHidden || nNoImg ? '<div class="alert-strip"><div class="alert-title">Atención</div><div class="alert-list">' +
+                (nHidden ? '<button class="alert-pill" data-tab="productos" data-status="hidden">' + nHidden + ' producto' + (nHidden===1?'':'s') + ' oculto' + (nHidden===1?'':'s') + '</button>' : '') +
+                (nNoImg ? '<button class="alert-pill" data-tab="productos" data-missing="image">' + nNoImg + ' producto' + (nNoImg===1?'':'s') + ' sin imagen</button>' : '') +
+              '</div></div>' : '') +
+            '</section>' +
+            '<section class="card dash-card dash-activity"><header class="card-head"><div><h3>Actividad reciente</h3><p class="desc">Últimos cambios en el panel.</p></div></header><div class="card-body dash-activity-body">' + actHtml + '</div></section>' +
           '</div>';
 
-        $('#dFrom', mount).addEventListener('change', function () { setRange(this.value, range.to); });
-        $('#dTo', mount).addEventListener('change', function () { setRange(range.from, this.value); });
-        $all('[data-range]', mount).forEach(function (b) {
-          b.addEventListener('click', function () {
-            var n = b.dataset.range;
-            if (n === 'all') setRange('', '');
-            else setRange(ymd(new Date(Date.now() - (Number(n) - 1) * 864e5)), ymd(new Date()));
-          });
-        });
         $all('[data-tab]', mount).forEach(function (b) {
           b.addEventListener('click', function () {
             var f = {};
@@ -3000,7 +2956,8 @@
   }
   function loginError(msg) {
     var e = $('#lgError');
-    e.style.display = 'block';
+    if (!e) return;
+    e.hidden = false;
     e.textContent = msg || '';
   }
   function showApp() {
@@ -3021,7 +2978,6 @@
   function boot() {
     if (!SB.isConfigured()) {
       showLogin();
-      loginError('Configura assets/js/config.js con tu SUPABASE_URL y anon key.');
       return;
     }
     if (SB.isLoggedIn()) {
@@ -3365,12 +3321,25 @@
     if (msg) loginError(msg);
   }
 
+  var lgReveal = $('#lgReveal');
+  if (lgReveal) {
+    lgReveal.addEventListener('click', function () {
+      var input = $('#lgPass');
+      if (!input) return;
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      lgReveal.setAttribute('aria-pressed', show ? 'true' : 'false');
+      lgReveal.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    });
+  }
+
   $('#loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var email = $('#lgEmail').value.trim().toLowerCase();
     var pass = $('#lgPass').value;
     var btn = $('#lgBtn');
-    $('#lgError').style.display = 'none';
+    var errBox = $('#lgError');
+    if (errBox) { errBox.hidden = true; errBox.textContent = ''; }
 
     if (lockRemaining(email) > 0) { applyLock(email); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !pass) {
@@ -3381,7 +3350,7 @@
     var started = Date.now();
     btn.dataset.busy = '1';
     btn.disabled = true;
-    btn.textContent = 'Entrando…';
+    btn.textContent = 'Entrando';
 
     SB.signIn(email, pass).then(function () { return resolveMe(); }).then(function () {
       clearGuard(email);
@@ -3400,7 +3369,7 @@
         } else {
           var e2 = guardFor(email) || { fails: 0 };
           var left2 = Math.max(0, MAX_TRIES - e2.fails);
-          loginError('Credenciales incorrectas.' + (left2 <= 2 ? ' Te quedan ' + left2 + ' intento(s).' : ''));
+          loginError(left2 <= 2 ? 'Credenciales incorrectas. Te quedan ' + left2 + ' intento(s).' : 'Credenciales incorrectas.');
           btn.disabled = false; btn.textContent = 'Entrar';
         }
       }, wait);

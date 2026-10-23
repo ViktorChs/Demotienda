@@ -148,19 +148,56 @@
     document.body.insertBefore(bar, document.body.firstChild);
   }
 
-  /* Aviso de tienda cerrada (fuera de horario o por interruptor maestro). */
+  /* Aviso de tienda cerrada (fuera de horario o por interruptor maestro).
+     Se muestra en un modal la primera vez; al cerrarlo no vuelve a aparecer. */
   function applyClosedBanner(store) {
-    if (document.getElementById('gh-closed-banner')) return;
     if (!window.ghStoreState) return;
     var st = window.ghStoreState(store);
     window.GIGA_STORE_OPEN = st.open;
-    if (st.open) return;
-    var bar = document.createElement('div');
-    bar.id = 'gh-closed-banner';
-    bar.setAttribute('role', 'status');
-    bar.textContent = window.ghClosedMessage ? window.ghClosedMessage(store, st) : 'Estamos cerrados.';
-    bar.style.cssText = 'display:block;text-align:center;padding:9px 14px;font:600 13px/1.45 inherit;color:#fff;background:#b91c1c;position:relative;z-index:61';
-    document.body.insertBefore(bar, document.body.firstChild);
+    var key = 'gh_closed_dismissed_' + ((window.GIGA_CONFIG && window.GIGA_CONFIG.STORE_ID) || 1);
+    if (st.open) { try { localStorage.removeItem(key); } catch (e) {} return; }
+    try { if (localStorage.getItem(key) === '1') return; } catch (e) {}
+    if (document.getElementById('gh-closed-modal')) return;
+
+    var ov = document.createElement('div');
+    ov.id = 'gh-closed-modal';
+    ov.setAttribute('role', 'dialog');
+    ov.setAttribute('aria-modal', 'true');
+    ov.setAttribute('aria-label', 'Tienda cerrada');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(17,24,39,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)';
+    ov.innerHTML =
+      '<div style="position:relative;max-width:440px;width:100%;background:#fff;color:#111827;border-radius:18px;padding:30px 24px 22px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);text-align:center;font-family:inherit">' +
+        '<button type="button" id="gh-closed-x" aria-label="Cerrar" style="position:absolute;top:10px;right:12px;width:34px;height:34px;border:0;border-radius:50%;background:#f3f4f6;color:#6b7280;font-size:18px;line-height:1;cursor:pointer">&#10005;</button>' +
+        '<div style="width:52px;height:52px;margin:0 auto 12px;border-radius:50%;background:#f5f3ff;display:flex;align-items:center;justify-content:center">' +
+          '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>' +
+        '</div>' +
+        '<h2 style="margin:0 0 8px;font-size:19px;font-weight:800">Tienda cerrada</h2>' +
+        '<p id="gh-closed-msg" style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#4b5563"></p>' +
+        '<button type="button" id="gh-closed-ok" style="width:100%;border:0;border-radius:999px;background:#7c3aed;color:#fff;font-weight:700;font-size:14px;padding:12px 18px;cursor:pointer">Entendido</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    var msgEl = ov.querySelector('#gh-closed-msg');
+    if (msgEl) msgEl.textContent = window.ghClosedMessage ? window.ghClosedMessage(store, st) : 'Estamos cerrados por ahora.';
+
+    var onKey = function (e) { if (e.key === 'Escape') close(); };
+    function close() {
+      try { localStorage.setItem(key, '1'); } catch (e) {}
+      document.removeEventListener('keydown', onKey);
+      if (ov.parentNode) ov.parentNode.removeChild(ov);
+    }
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    var bx = ov.querySelector('#gh-closed-x'); if (bx) { bx.addEventListener('click', close); bx.focus(); }
+    var ok = ov.querySelector('#gh-closed-ok'); if (ok) ok.addEventListener('click', close);
+  }
+
+  /* Ajuste de tamaño del logo de la tienda (store.logoScale, %). */
+  function applyLogoSize(store) {
+    var pct = Number(store && store.logoScale);
+    if (!pct || pct === 100) return;
+    pct = Math.max(30, Math.min(200, pct)) / 100;
+    var els = document.querySelectorAll('.pl-logo, .hero-logo-img, [data-gh-logo]');
+    Array.prototype.forEach.call(els, function (im) { im.style.zoom = pct; });
   }
 
   function applyDecorations(deco) {
@@ -454,7 +491,7 @@
   GD.ready.then(function (D) {
     D = D || {};
     var hasCfg = D.settings && Object.keys(D.settings).length;
-    if (hasCfg) { applyTheme(D.settings, D.themes || []); hydrateTexts(D.settings); applyClosedBanner(D.settings.store); }
+    if (hasCfg) { applyTheme(D.settings, D.themes || []); hydrateTexts(D.settings); applyClosedBanner(D.settings.store); applyLogoSize(D.settings.store); }
 
     var products = D.products || [];
     if (!products.length) { window.dispatchEvent(new CustomEvent('gh:ready')); return; }

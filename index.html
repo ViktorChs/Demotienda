@@ -11,6 +11,7 @@
 <script src="assets/js/config.js"></script>
 <script src="assets/js/sb.js"></script>
 <script src="assets/js/data.js"></script>
+    <script src="assets/js/hero-canvas.js"></script>
     <link rel="stylesheet" href="assets/css/dark.css">
     <link rel="stylesheet" href="assets/css/glow-cards.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -35,6 +36,24 @@
             display: block;
             width: 100%;
             height: 100%;
+        }
+        /* Fondo de portada (tipo "imagen"): 3 tamanos responsive */
+        #heroBg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: none;
+            z-index: 0;
+        }
+        #heroOverlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            pointer-events: none;
+            z-index: 1;
         }
         /* Logo del hero: escalable en todos los dispositivos */
         .hero-logo-img {
@@ -1250,6 +1269,8 @@
 
 
     <div id="canvasContainer">
+        <img id="heroBg" alt="" aria-hidden="true" decoding="async">
+        <div id="heroOverlay" aria-hidden="true"></div>
         <canvas id="hexCanvas"></canvas>
 
         <!-- Destellos morados en las esquinas del canvas -->
@@ -1976,83 +1997,9 @@
             <p>&copy; 2026 MANIAWORLD. Todos los derechos reservados.</p>
             <div class="mt-2 sm:mt-0 flex items-center gap-2">
                 <span class="text-purple-500 font-medium">MANIAWORLD</span>
-                <button id="settingsToggle" class="p-2 rounded-full bg-white/80 text-gray-800 hover:bg-white shadow-sm backdrop-blur-md border border-gray-200 transition-colors" title="Panel de Modificaciones" aria-label="Panel de modificaciones">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
-                    </svg>
-                </button>
             </div>
         </div>
     </footer>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300 ease-in-out">
-        <div class="glass-panel w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/90 transform scale-95 transition-transform duration-300 ease-in-out relative flex flex-col max-h-[90vh] overflow-y-auto" id="modalContent">
-            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                <h2 class="text-gray-900 font-bold text-base sm:text-lg flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></span>
-                    Panel de Modificaciones
-                </h2>
-                <button id="closeModal" class="p-2 rounded-full hover:bg-gray-200/60 transition-colors text-gray-500 hover:text-gray-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-            </div>
-
-            <div class="space-y-5">
-                <div>
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-purple-600 mb-2">Efectos & Dimensiones</h3>
-                    <p class="text-gray-600 text-xs mb-4 leading-relaxed">
-                        Personaliza el comportamiento y la altura del contenedor hexagonal.
-                    </p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1.5">Modo de Animación</label>
-                    <select id="modeSelect" class="w-full bg-white/90 border border-gray-200 text-gray-800 text-xs sm:text-sm rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer shadow-sm">
-                        <option value="organic_zones">1. Matriz de Zonas Orgánicas</option>
-                        <option value="pulse" selected>2. Pulso Central (Por Defecto)</option>
-                        <option value="supernova">3. Explosión Supernova</option>
-                        <option value="fluid_nodes">4. Ondas Orgánicas Fluctuantes</option>
-                        <option value="corner_rotation">5. Respiración de Esquinas</option>
-                        <option value="drifting_nebula">6. Nebulosa Móvil</option>
-                        <option value="sine_ribbon">7. Pulso Catenario Orgánico</option>
-                        <option value="organic_eclipse">8. Eclipse Orgánico</option>
-                        <option value="organic_constellation">9. Constelación Orgánica</option>
-                    </select>
-                </div>
-
-                <div>
-                    <div class="flex justify-between text-xs font-semibold text-gray-700 mb-1.5">
-                        <span>Intensidad de Brillo Neón</span>
-                        <span id="glowVal" class="text-purple-600 font-bold">2.0x</span>
-                    </div>
-                    <input type="range" id="glowSlider" min="0.5" max="2.0" step="0.1" value="2.0" 
-                        class="w-full accent-purple-600 cursor-pointer">
-                </div>
-
-                <div>
-                    <div class="flex justify-between text-xs font-semibold text-gray-700 mb-1.5">
-                        <span>Altura del Contenedor (Height)</span>
-                        <span id="heightVal" class="text-purple-600 font-bold">100vh</span>
-                    </div>
-                    <input type="range" id="heightSlider" min="40" max="100" step="5" value="100" 
-                        class="w-full accent-purple-600 cursor-pointer">
-                </div>
-
-                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <span class="text-xs font-semibold text-gray-700">Estado de Animación</span>
-                    <button id="pauseToggle" class="px-4 py-2 rounded-full text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors shadow-sm">
-                        Pausar
-                    </button>
-                </div>
-            </div>
-
-            <div class="text-center pt-6 mt-6 border-t border-gray-200 text-[11px] text-gray-500">
-                MANIAWORLD &bull; Panel Modal Interactivo
-            </div>
-        </div>
-    </div>
 
     <!-- Mobile Nav Drawer -->
     <div id="navMenu" class="md-overlay" role="dialog" aria-modal="true" aria-label="Menú de navegación">
@@ -2334,65 +2281,27 @@
             sliderContainer.parentElement.scrollBy({ left: 240, behavior: 'smooth' });
         });
 
-        const canvasContainer = document.getElementById('canvasContainer');
-        const canvas = document.getElementById('hexCanvas');
-        const ctx = canvas.getContext('2d', { alpha: false });
-
-        let width, height;
-        let hexRadius = window.innerWidth < 640 ? 28 : 32;
-        let horizDist, vertDist;
-        let dprScale = Math.min(window.devicePixelRatio || 1, 2);
-
-        let glowIntensity = 2.0;
-        let isRunning = true;
-        let currentMode = 'pulse';
-
-        let rafId = null;
-        let heroVisible = true;
-
-        let isDark = document.documentElement.classList.contains('dark');
-        window.addEventListener('theme:change', (e) => {
-            isDark = !!(e.detail && e.detail.theme === 'dark');
-            baseDirty = true;
-            if (typeof buildStrokeColors === 'function') glowStroke = buildStrokeColors();
-        });
-        const CANVAS_BG = () => (isDark ? '#0F0A1E' : '#f4f5f7');
-        const CANVAS_LINE = () => (isDark ? '#2a2f3a' : '#dcdfe6');
-
-        /* Capa cacheada con la rejilla en reposo: evita repintar todos los
-           hexagonos cada frame. Cada frame solo se redibujan los hexagonos
-           encendidos (el pulso) sobre este fondo ya listo. */
-        const baseCanvas = document.createElement('canvas');
-        const baseCtx = baseCanvas.getContext('2d', { alpha: false });
-        let baseDirty = true;
-
-        let ripples = [];
-        let lastRippleTime = 0;
-        let idlePresented = false;
-        const rippleInterval = 5000;
-
-        const settingsToggle = document.getElementById('settingsToggle');
-        const settingsModal = document.getElementById('settingsModal');
-        const modalContent = document.getElementById('modalContent');
-        const closeModal = document.getElementById('closeModal');
-
-        function openModal() {
-            settingsModal.classList.remove('opacity-0', 'pointer-events-none');
-            modalContent.classList.remove('scale-95');
-            modalContent.classList.add('scale-100');
-        }
-
-        function closeModalFunc() {
-            settingsModal.classList.add('opacity-0', 'pointer-events-none');
-            modalContent.classList.remove('scale-100');
-            modalContent.classList.add('scale-95');
-        }
-
-        settingsToggle.addEventListener('click', openModal);
-        closeModal.addEventListener('click', closeModalFunc);
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) closeModalFunc();
-        });
+        /* Portada: renderer modular (assets/js/hero-canvas.js) */
+        (function () {
+            var GD = window.GigaData;
+            var container = document.getElementById('canvasContainer');
+            var canvas = document.getElementById('hexCanvas');
+            var bg = document.getElementById('heroBg');
+            var overlay = document.getElementById('heroOverlay');
+            if (!container || !canvas || !window.GHHero) return;
+            var hero = new GHHero(canvas, {
+                container: container, bg: bg, overlay: overlay,
+                isDark: document.documentElement.classList.contains('dark')
+            });
+            function applyCanvasSettings(D) {
+                hero.configure((D && D.settings && D.settings.canvas) || {});
+            }
+            hero.configure({});
+            if (GD && GD.ready) GD.ready.then(applyCanvasSettings); else applyCanvasSettings(null);
+            window.addEventListener('theme:change', function (e) {
+                hero.setTheme(!!(e.detail && e.detail.theme === 'dark'));
+            });
+        })();
 
         let sfxEnabled = true;
         const sfxPop = new Audio('assets/audio/pop.mp3');
@@ -2465,374 +2374,6 @@
                 likeIcon.classList.remove('text-purple-600');
             }
         });
-
-        const modeSelect = document.getElementById('modeSelect');
-        const glowSlider = document.getElementById('glowSlider');
-        const glowVal = document.getElementById('glowVal');
-        const heightSlider = document.getElementById('heightSlider');
-        const heightVal = document.getElementById('heightVal');
-        const pauseToggle = document.getElementById('pauseToggle');
-
-        modeSelect.addEventListener('change', (e) => {
-            currentMode = e.target.value;
-            ripples = [];
-        });
-
-        glowSlider.addEventListener('input', (e) => {
-            glowIntensity = parseFloat(e.target.value);
-            glowVal.textContent = glowIntensity.toFixed(1) + 'x';
-            buildGlowSprites();
-        });
-
-        heightSlider.addEventListener('input', (e) => {
-            const hVal = e.target.value;
-            canvasContainer.style.height = hVal + 'vh';
-            heightVal.textContent = hVal + 'vh';
-            resizeCanvas();
-        });
-
-        pauseToggle.addEventListener('click', () => {
-            isRunning = !isRunning;
-            pauseToggle.textContent = isRunning ? 'Pausar' : 'Reanudar';
-            pauseToggle.className = isRunning 
-                ? 'px-4 py-2 rounded-full text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors shadow-sm'
-                : 'px-4 py-2 rounded-full text-xs font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors shadow-sm';
-            if (isRunning) {
-                startLoop();
-            } else {
-                stopLoop();
-            }
-        });
-
-        function resizeCanvas() {
-            dprScale = Math.min(window.devicePixelRatio || 1, 2);
-            width = canvasContainer.clientWidth;
-            height = canvasContainer.clientHeight;
-            
-            hexRadius = width < 640 ? 28 : 32;
-            horizDist = hexRadius * 1.5;
-            vertDist = hexRadius * Math.sqrt(3);
-
-            canvas.width = width * dprScale;
-            canvas.height = height * dprScale;
-            
-            ctx.scale(dprScale, dprScale);
-            buildGlowSprites();
-            baseDirty = true;
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-
-        function drawHexagon(c, x, y, radius, fillColor, strokeColor, lineWidth, shadowBlur = 0, shadowColor = '') {
-            c.beginPath();
-            const r = radius;
-            c.moveTo(x + r, y);
-            c.lineTo(x + r * 0.5, y + r * 0.866);
-            c.lineTo(x - r * 0.5, y + r * 0.866);
-            c.lineTo(x - r, y);
-            c.lineTo(x - r * 0.5, y - r * 0.866);
-            c.lineTo(x + r * 0.5, y - r * 0.866);
-            c.closePath();
-
-            c.fillStyle = fillColor;
-            c.fill();
-
-            if (shadowBlur > 0.5) {
-                c.save();
-                c.shadowColor = shadowColor;
-                c.shadowBlur = shadowBlur;
-                c.shadowOffsetX = 0;
-                c.shadowOffsetY = 0;
-                c.strokeStyle = strokeColor;
-                c.lineWidth = lineWidth;
-                c.stroke();
-                c.restore();
-            } else {
-                c.strokeStyle = strokeColor;
-                c.lineWidth = lineWidth;
-                c.stroke();
-            }
-        }
-
-        /* Rejilla en reposo -> canvas offscreen. Se reconstruye solo al
-           redimensionar o cambiar de tema, no en cada frame. */
-        function renderBase() {
-            const bw = Math.max(1, Math.round(width * dprScale));
-            const bh = Math.max(1, Math.round(height * dprScale));
-            if (baseCanvas.width !== bw) baseCanvas.width = bw;
-            if (baseCanvas.height !== bh) baseCanvas.height = bh;
-            baseCtx.setTransform(dprScale, 0, 0, dprScale, 0, 0);
-            baseCtx.fillStyle = CANVAS_BG();
-            baseCtx.fillRect(0, 0, width, height);
-
-            const cols = Math.ceil(width / horizDist) + 2;
-            const rows = Math.ceil(height / vertDist) + 2;
-            for (let row = -1; row < rows; row++) {
-                for (let col = -1; col < cols; col++) {
-                    const x = col * horizDist;
-                    const y = row * vertDist + (col % 2 === 0 ? 0 : vertDist / 2);
-                    drawHexagon(baseCtx, x, y, hexRadius - 1.2, CANVAS_BG(), CANVAS_LINE(), 1.5);
-                }
-            }
-            baseDirty = false;
-        }
-
-        // --- Glow sprites: SOLO halo de glow pre-renderizado por nivel ---
-        // El trazo del hexagono lo dibuja drawHexagon en vivo (path vectorial,
-        // calza siempre a cualquier DPR). Aqui solo se cachea el halo difuso
-        // (lo que antes era ctx.shadowBlur en vivo, el path mas caro de canvas 2D)
-        // para blitearlo detras del trazo.
-        const GLOW_LEVELS = 16;
-        let glowSprites = [];
-        let glowStroke = [];
-        let spriteSize = 0;
-
-        /* Colores de trazo por nivel de glow, precalculados para no crear
-           strings (y forzar GC) por cada hexagono encendido en cada frame. */
-        function buildStrokeColors() {
-            const out = [];
-            for (let b = 0; b < GLOW_LEVELS; b++) {
-                const f = (b + 0.5) / GLOW_LEVELS;
-                const rS = isDark ? Math.round(42 + f * 126) : Math.round(220 - f * 70);
-                const gS = isDark ? Math.round(47 + f * 38) : Math.round(223 - f * 180);
-                const bS = isDark ? Math.round(58 + f * 189) : Math.round(230 + f * 25);
-                out.push('rgb(' + rS + ', ' + gS + ', ' + bS + ')');
-            }
-            return out;
-        }
-
-        function buildGlowSprites() {
-            const blur = 22 * glowIntensity;
-            const pad = Math.ceil(blur + 6);
-            spriteSize = Math.ceil(hexRadius * 2 + pad * 2);
-            glowSprites = [];
-            const r = hexRadius - 1.2;
-            /* El halo es puro desenfoque: se renderiza a menor densidad para
-               abaratar el blit por frame sin perdida visible (topado a 1.5). */
-            const spriteDpr = Math.min(dprScale, 1.5);
-            for (let b = 0; b < GLOW_LEVELS; b++) {
-                const f = (b + 0.5) / GLOW_LEVELS;
-                const c = document.createElement('canvas');
-                c.width = c.height = Math.ceil(spriteSize * spriteDpr);
-                const g = c.getContext('2d');
-                g.scale(spriteDpr, spriteDpr);
-                const cx = spriteSize / 2, cy = spriteSize / 2;
-                g.beginPath();
-                g.moveTo(cx + r, cy);
-                g.lineTo(cx + r * 0.5, cy + r * 0.866);
-                g.lineTo(cx - r * 0.5, cy + r * 0.866);
-                g.lineTo(cx - r, cy);
-                g.lineTo(cx - r * 0.5, cy - r * 0.866);
-                g.lineTo(cx + r * 0.5, cy - r * 0.866);
-                g.closePath();
-                g.lineWidth = 1.5 + f * 2.0;
-                g.shadowBlur = f * blur;
-                g.shadowColor = `rgba(168, 85, 247, ${f * 0.95})`;
-                g.strokeStyle = 'rgba(0,0,0,0)';
-                g.stroke();
-                glowSprites.push(c);
-            }
-            glowStroke = buildStrokeColors();
-        }
-
-        // --- Loop con pausa fuera de viewport ---
-        function startLoop() {
-            if (rafId != null || !isRunning || !heroVisible) return;
-            lastTime = performance.now();
-            rafId = requestAnimationFrame(animate);
-        }
-        function stopLoop() {
-            if (rafId == null) return;
-            cancelAnimationFrame(rafId);
-            rafId = null;
-        }
-        const heroObserver = new IntersectionObserver(entries => {
-            heroVisible = entries[0].isIntersecting;
-            if (heroVisible) startLoop();
-            else stopLoop();
-        });
-        heroObserver.observe(canvasContainer);
-        resizeCanvas();
-
-        let lastTime = performance.now();
-
-        function animate(currentTime) {
-            if (!isRunning || !heroVisible) { rafId = null; return; }
-
-            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
-            lastTime = currentTime;
-            const timeSec = currentTime * 0.001;
-
-            if (currentMode === 'pulse') {
-                if (currentTime - lastRippleTime > rippleInterval) {
-                    ripples.push({
-                        x: width / 2,
-                        y: height / 2,
-                        radius: 0,
-                        maxRadius: Math.hypot(width, height) * 0.75,
-                        speed: 280
-                    });
-                    lastRippleTime = currentTime;
-                }
-
-                for (let i = ripples.length - 1; i >= 0; i--) {
-                    ripples[i].radius += ripples[i].speed * dt;
-                    if (ripples[i].radius > ripples[i].maxRadius) {
-                        ripples.splice(i, 1);
-                    }
-                }
-            }
-
-            // Modo pulse: si no hay ondas activas la escena es estatica.
-            // Se presenta el fondo una sola vez y se deja de dibujar hasta el
-            // proximo pulso (raf sigue vivo solo para detectar el disparo).
-            if (currentMode === 'pulse' && ripples.length === 0) {
-                if (!baseDirty && idlePresented) {
-                    rafId = requestAnimationFrame(animate);
-                    return;
-                }
-                idlePresented = true;
-            } else {
-                idlePresented = false;
-            }
-
-            if (baseDirty) renderBase();
-            ctx.drawImage(baseCanvas, 0, 0, width, height);
-
-            const cols = Math.ceil(width / horizDist) + 2;
-            const rows = Math.ceil(height / vertDist) + 2;
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const bgColor = CANVAS_BG();
-
-            for (let row = -1; row < rows; row++) {
-                for (let col = -1; col < cols; col++) {
-                    const x = col * horizDist;
-                    const y = row * vertDist + (col % 2 === 0 ? 0 : vertDist / 2);
-
-                    let factor = 0;
-                    const _dcx = x - centerX, _dcy = y - centerY;
-                    const distFromCenter = Math.sqrt(_dcx * _dcx + _dcy * _dcy);
-
-                    switch (currentMode) {
-                        case 'pulse': {
-                            for (let r of ripples) {
-                                const dx = x - r.x;
-                                const dy = y - r.y;
-                                const dist = Math.sqrt(dx * dx + dy * dy);
-                                const bandWidth = 90;
-                                const dFromWave = Math.abs(dist - r.radius);
-                                if (dFromWave < bandWidth) {
-                                    let f = 1 - (dFromWave / bandWidth);
-                                    let fade = Math.max(0, 1 - (r.radius / r.maxRadius));
-                                    factor = Math.max(factor, f * fade * glowIntensity);
-                                }
-                            }
-                            break;
-                        }
-                        case 'supernova': {
-                            let superCycle = (timeSec * 1.2) % 3.5;
-                            let superRadius = superCycle * 320;
-                            let dSuper = Math.abs(distFromCenter - superRadius);
-                            if (dSuper < 90) {
-                                factor = (1 - dSuper / 90) * Math.max(0, 1 - superCycle / 3.5) * glowIntensity;
-                            }
-                            break;
-                        }
-                        case 'organic_zones': {
-                            const zx1 = width * (0.25 + 0.5 * Math.sin(timeSec * 0.4));
-                            const zy1 = height * (0.25 + 0.5 * Math.cos(timeSec * 0.5));
-                            const zx2 = width * (0.75 + 0.2 * Math.cos(timeSec * 0.6));
-                            const zy2 = height * (0.75 + 0.2 * Math.sin(timeSec * 0.4));
-
-                            const distZone1 = Math.hypot(x - zx1, y - zy1);
-                            const distZone2 = Math.hypot(x - zx2, y - zy2);
-                            const distTL = Math.hypot(x, y);
-                            const distBR = Math.hypot(x - width, y - height);
-
-                            const cornerTL = Math.max(0, 1 - distTL / (width * 0.35)) * Math.max(0, Math.sin(timeSec * 1.5));
-                            const cornerBR = Math.max(0, 1 - distBR / (width * 0.35)) * Math.max(0, Math.cos(timeSec * 1.3));
-
-                            const patch1 = Math.max(0, 1 - distZone1 / 220) * (Math.sin(timeSec * 2) * 0.5 + 0.5);
-                            const patch2 = Math.max(0, 1 - distZone2 / 200) * (Math.cos(timeSec * 2.2) * 0.5 + 0.5);
-
-                            factor = Math.max(patch1, patch2, cornerTL * 0.85, cornerBR * 0.85) * glowIntensity;
-                            break;
-                        }
-                        case 'fluid_nodes': {
-                            const nx1 = width * (0.5 + 0.3 * Math.sin(timeSec * 0.5));
-                            const ny1 = height * (0.5 + 0.3 * Math.cos(timeSec * 0.4));
-                            const nx2 = width * (0.5 + 0.3 * Math.cos(timeSec * 0.6));
-                            const ny2 = height * (0.5 + 0.3 * Math.sin(timeSec * 0.7));
-
-                            const d1 = Math.hypot(x - nx1, y - ny1);
-                            const d2 = Math.hypot(x - nx2, y - ny2);
-                            factor = (Math.max(0, 1 - d1 / 240) + Math.max(0, 1 - d2 / 240)) * 0.65 * glowIntensity;
-                            break;
-                        }
-                        case 'corner_rotation': {
-                            let cornerCycle = (timeSec * 0.4) % 4;
-                            let activeCorner = Math.floor(cornerCycle);
-                            let cx = (activeCorner === 0 || activeCorner === 3) ? width * 0.15 : width * 0.85;
-                            let cy = (activeCorner === 0 || activeCorner === 1) ? height * 0.15 : height * 0.85;
-                            let dCorner = Math.hypot(x - cx, y - cy);
-                            let progressInCorner = cornerCycle % 1;
-                            let localIntensity = Math.sin(progressInCorner * Math.PI);
-                            factor = Math.max(0, 1 - dCorner / (width * 0.45)) * localIntensity * glowIntensity;
-                            break;
-                        }
-                        case 'drifting_nebula': {
-                            let fSum = 0;
-                            for (let k = 0; k < 3; k++) {
-                                let px = width * (0.3 + 0.4 * Math.sin(timeSec * (0.3 + k * 0.15) + k * 2.1));
-                                let py = height * (0.3 + 0.4 * Math.cos(timeSec * (0.35 + k * 0.12) + k * 1.7));
-                                let dp = Math.hypot(x - px, y - py);
-                                fSum += Math.max(0, 1 - dp / 220);
-                            }
-                            factor = Math.min(1.0, fSum * 0.6) * glowIntensity;
-                            break;
-                        }
-                        case 'sine_ribbon': {
-                            let ribbonY = height * 0.5 + Math.sin(x * 0.004 + timeSec) * (height * 0.25) + Math.cos(timeSec * 0.7) * 40;
-                            let dRibbon = Math.abs(y - ribbonY);
-                            factor = Math.max(0, 1 - dRibbon / 160) * (0.5 + 0.5 * Math.sin(timeSec * 2.5)) * glowIntensity;
-                            break;
-                        }
-                        case 'organic_eclipse': {
-                            let ex = width * 0.5 + Math.sin(timeSec * 0.45) * (width * 0.25);
-                            let ey = height * 0.5 + Math.cos(timeSec * 0.55) * (height * 0.25);
-                            let dEclipse = Math.hypot(x - ex, y - ey);
-                            let ringRadius = 140 + Math.sin(timeSec * 1.5) * 70;
-                            let dRing = Math.abs(dEclipse - ringRadius);
-                            factor = Math.max(0, 1 - dRing / 90) * glowIntensity;
-                            break;
-                        }
-                        case 'organic_constellation': {
-                            let gridN = Math.sin(x * 0.008 + timeSec) + Math.cos(y * 0.008 + timeSec * 1.2);
-                            let envelope = Math.max(0, 1 - distFromCenter / (width * 0.7));
-                            factor = Math.max(0, gridN * 0.5 + 0.5) * envelope * glowIntensity;
-                            break;
-                        }
-                    }
-
-                    factor = Math.min(1.0, Math.max(0, factor));
-
-                    // Los hexagonos apagados ya estan en la capa base: solo se
-                    // redibujan los que se encienden con el pulso.
-                    if (factor < 0.02) continue;
-
-                    const b = Math.min(GLOW_LEVELS - 1, (factor * GLOW_LEVELS) | 0);
-                    ctx.drawImage(glowSprites[b], x - spriteSize / 2, y - spriteSize / 2, spriteSize, spriteSize);
-                    drawHexagon(ctx, x, y, hexRadius - 1.2, bgColor, glowStroke[b], 1.5 + factor * 2.0);
-                }
-            }
-
-            rafId = requestAnimationFrame(animate);
-        }
-
-        window.onload = function () {
-            startLoop();
-        };
     </script>
 
     <script>

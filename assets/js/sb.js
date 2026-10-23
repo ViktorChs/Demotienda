@@ -354,6 +354,79 @@
     return BASE + '/storage/v1/object/public/' + BUCKET + '/' + path.replace(/^\/+/, '');
   }
 
+  // ---- Storage: nombres, borrado y listado ----
+  // Prefijo de esta tienda dentro del bucket (los uploads usan este prefijo).
+  function storePrefix() { return 's' + (Number(cfg.STORE_ID) || 1) + '/'; }
+
+  // Convierte una URL guardada en el nombre del objeto dentro del bucket.
+  // Devuelve '' si la URL no apunta a un objeto de este bucket.
+  function storageName(src) {
+    if (!src) return '';
+    var s = String(src).trim();
+    if (!s) return '';
+    var pub = '/storage/v1/object/public/' + BUCKET + '/';
+    var i = s.indexOf(pub);
+    if (i >= 0) return decodeURIComponent(s.slice(i + pub.length));
+    var own = '/storage/v1/object/' + BUCKET + '/';
+    var j = s.indexOf(own);
+    if (j >= 0) return decodeURIComponent(s.slice(j + own.length));
+    if (CDN) {
+      var c = CDN.replace(/\/+$/, '') + '/';
+      var k = s.indexOf(c);
+      if (k === 0) return decodeURIComponent(s.slice(c.length));
+    }
+    return '';
+  }
+
+  // Borra un objeto del bucket. Solo deja borrar objetos de esta tienda.
+  // Nunca lanza: devuelve {deleted, name, reason}.
+  function removeImage(src) {
+    var name = storageName(src);
+    if (!name) return Promise.resolve({ deleted: false, reason: 'no-es-imagen-de-storage' });
+    if (name.indexOf(storePrefix()) !== 0) return Promise.resolve({ deleted: false, name: name, reason: 'pertenece-a-otra-tienda' });
+    var enc = name.split('/').map(encodeURIComponent).join('/');
+    return ensureFresh().then(function () {
+      return fetch(BASE + '/storage/v1/object/' + BUCKET + '/' + enc, {
+        method: 'DELETE',
+        headers: { apikey: KEY, Authorization: 'Bearer ' + token() }
+      });
+    }).then(function (res) {
+      if (res.ok) return { deleted: true, name: name };
+      return res.text().then(function (t) {
+        return { deleted: false, name: name, reason: 'HTTP ' + res.status, detail: String(t || '').slice(0, 200) };
+      });
+    }).catch(function (e) {
+      return { deleted: false, name: name, reason: e && e.message ? e.message : 'error' };
+    });
+  }
+
+  // Lista los archivos del bucket (recursivo). Devuelve nombres de objeto.
+  function listImages(prefix) {
+    var pre = prefix == null ? storePrefix() : prefix;
+    function list(p) {
+      return fetch(BASE + '/storage/v1/object/list/' + BUCKET, {
+        method: 'POST',
+        headers: { apikey: KEY, Authorization: 'Bearer ' + token(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 1000, prefix: p })
+      }).then(function (res) {
+        if (!res.ok) return res.text().then(function (t) { throw new Error('No se pudo listar: ' + String(t || '').slice(0, 160)); });
+        return res.json();
+      }).then(function (arr) {
+        var files = [], folders = [];
+        (arr || []).forEach(function (o) {
+          if (!o || !o.name) return;
+          if (o.id) files.push(p + o.name);
+          else folders.push(o.name);
+        });
+        if (!folders.length) return files;
+        return Promise.all(folders.map(function (f) { return list(p + f + '/'); })).then(function (subs) {
+          return files.concat.apply(files, subs);
+        });
+      });
+    }
+    return ensureFresh().then(function () { return list(pre); });
+  }
+
   // Resuelve cualquier valor de imagen a una URL usable:
   //   http(s) | data:  -> tal cual (externa)
   //   assets/ | ./ | / -> relativo a la pagina (archivo local)
@@ -414,6 +487,11 @@
     upload: upload,
     publicUrl: publicUrl,
     resolveImage: resolveImage,
-    cdnUrl: cdnUrl
+    cdnUrl: cdnUrl,
+    // Storage: utilidades de limpieza (borrado de archivos sin uso)
+    storageName: storageName,
+    storePrefix: storePrefix,
+    removeImage: removeImage,
+    listImages: listImages
   };
 })();
